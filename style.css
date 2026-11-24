@@ -318,3 +318,12 @@ svg.rr .rr-name{font:600 13px var(--font);fill:#37352f}
 .rrerr{color:#d44c47;font-size:13px;padding:6px 0}
 .rrdef{font-family:var(--mono);font-size:12.5px;resize:vertical}
 .rrmsg{color:#d44c47;font-size:12px;min-height:1em;margin-top:2px}
+.tlc.ed{cursor:pointer;border-radius:4px;padding:1px 2px}
+.tlc.ed:hover{background:var(--hover)}
+.tagplus{color:var(--light);font-size:13px;margin-left:2px}
+.tagrow{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.tagw{display:inline-flex;align-items:center}
+.tagrm{border:0;background:none;color:var(--light);cursor:pointer;font-size:13px;padding:0 3px}
+.tagrm:hover{color:#eb5757}
+.tagadd{border:0;background:none;color:var(--light);cursor:pointer;font-size:13px;padding:2px 4px;border-radius:4px}
+.tagadd:hover{background:var(--hover)}

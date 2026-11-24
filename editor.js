@@ -23,8 +23,29 @@ const kurzDatum = iso => { if (!iso) return ''; const [, m, d] = iso.split('-');
 const THEMEN = { 'Einstieg': 'gray', 'Endliche Automaten': 'blue', 'Reguläre Ausdrücke': 'green', 'Grammatiken': 'orange', 'Mealy-Automaten': 'purple', 'Syntaxdiagramme': 'pink', 'Registermaschine': 'brown', 'Klausur': 'red' };
 const GEFUEHL = { 'gut': 'green', 'mittel': 'yellow', 'schwer': 'red' };
 const ARTEN = { 'Unterricht': 'gray', 'Arbeitsauftrag': 'blue', 'Themenzettel': 'purple' };
-const sortKey = p => (p.props.datum || '9') + (p.props.art === 'Themenzettel' ? '0' : '1');
+const tagsOf = p => { const P = p.props; if (!Array.isArray(P.tags)) P.tags = P.art && P.art !== 'Unterricht' ? [P.art] : []; return P.tags; };
+const sortKey = p => (p.props.datum || '9') + (p.props.art === 'Themenzettel' || tagsOf(p).includes('Themenzettel') ? '0' : '1');
 const chip = (txt, map) => txt ? h('span', { class: 'chip c-' + (map[txt] || 'gray') }, txt) : '';
+const tagChip = t => h('span', { class: 'chip c-' + (THEMEN[t] || ARTEN[t] || 'gray') }, t);
+function syncArt(p) { const tg = tagsOf(p); p.props.art = tg.includes('Themenzettel') ? 'Themenzettel' : tg.includes('Arbeitsauftrag') ? 'Arbeitsauftrag' : 'Unterricht'; }
+function allTags() {
+  const s = new Set(Object.keys(ARTEN).filter(k => k !== 'Unterricht'));
+  Object.keys(THEMEN).forEach(k => s.add(k));
+  Object.values(DOC.pages).forEach(p => p.props && (p.props.tags || []).forEach(t => s.add(t)));
+  return [...s];
+}
+function tagPop(anchor, p) {
+  closePop();
+  POP = h('div', { class: 'pop' }); document.body.append(POP);
+  const tg = tagsOf(p);
+  const item = (on, label, fn) => POP.append(h('div', { class: 'popi small', onmousedown: ev => { ev.preventDefault(); fn(); save(); closePop(); render(); } }, h('span', { class: 'popic' }, on ? '✓' : ''), label));
+  POP.append(h('div', { class: 'poph' }, 'Thema'));
+  Object.keys(THEMEN).forEach(k => item(p.props.thema === k, chip(k, THEMEN), () => { p.props.thema = k; p.props.tags = tg.filter(t => t !== k); }));
+  POP.append(h('div', { class: 'poph' }, 'Zusätzliche Begriffe'));
+  allTags().filter(t => t !== p.props.thema).forEach(t => item(tg.includes(t), tagChip(t), () => { const i = tg.indexOf(t); if (i >= 0) tg.splice(i, 1); else tg.push(t); syncArt(p); }));
+  item(false, h('span', { class: 'popn' }, 'Neuer Begriff …'), () => { const n = (prompt('Neuer Begriff') || '').trim(); if (n && !tg.includes(n)) { tg.push(n); syncArt(p); } });
+  place(POP, anchor);
+}
 
 const TYPES = [
   ['p', 'Text', 'Einfach losschreiben', 'T'],
@@ -246,12 +267,18 @@ function propsEl(p) {
   const P = p.props, box = h('div', { class: 'props' });
   const hide = p.hide || [], KEYS = { 'Datum': 'datum', 'Thema': 'thema', 'Werkzeug': 'werkzeug', 'Gefühl': 'gefuehl', 'Art': 'art' };
   const row = (ic, name, view, editor) => hide.includes(KEYS[name]) ? null : box.append(h('div', { class: 'prop' }, h('div', { class: 'pn' }, h('span', { class: 'pi' }, ic), name), h('div', { class: 'pv' }, EDIT ? editor() : view)));
-  const sel = (key, map) => () => { const s = h('select', { onchange: () => { P[key] = s.value; save(); } }, h('option', { value: '' }, '—'), ...Object.keys(map).map(k => h('option', { value: k, selected: P[key] === k ? 'selected' : false }, k))); return s; };
+  const sel = (key, map) => () => { const s = h('select', { onchange: () => { P[key] = s.value; if (key === 'art') { P.tags = tagsOf(p).filter(t => !ARTEN[t]); if (s.value && s.value !== 'Unterricht') P.tags.push(s.value); } save(); } }, h('option', { value: '' }, '—'), ...Object.keys(map).map(k => h('option', { value: k, selected: P[key] === k ? 'selected' : false }, k))); return s; };
   row('📅', 'Datum', langDatum(P.datum), () => h('input', { type: 'date', value: P.datum || '', onchange: e => { P.datum = e.target.value; save(); } }));
   row('🏷️', 'Thema', chip(P.thema, THEMEN), sel('thema', THEMEN));
   row('🛠️', 'Werkzeug', P.werkzeug || '', () => { const i = h('input', { value: P.werkzeug || '', placeholder: 'leer', oninput: e => { P.werkzeug = e.target.value; save(); } }); return i; });
   row('🙂', 'Gefühl', chip(P.gefuehl, GEFUEHL), sel('gefuehl', GEFUEHL));
   row('📌', 'Art', chip(P.art, ARTEN), sel('art', ARTEN));
+  if (EDIT && p.id !== 'home') {
+    const v = h('div', { class: 'tagrow' }, ...tagsOf(p).map(t => h('span', { class: 'tagw' }, tagChip(t), h('button', { class: 'tagrm', title: 'entfernen', onclick: () => { p.props.tags = tagsOf(p).filter(x => x !== t); syncArt(p); save(); render(); } }, '×'))));
+    const add = h('button', { class: 'tagadd', onclick: () => tagPop(add, p) }, '+ Begriff');
+    v.append(add);
+    box.append(h('div', { class: 'prop' }, h('div', { class: 'pn' }, h('span', { class: 'pi' }, '🔖'), 'Begriffe'), h('div', { class: 'pv' }, v)));
+  }
   return box;
 }
 
@@ -727,7 +754,7 @@ function dbEl(b) {
       const m = p.props.datum ? MONATE[+p.props.datum.slice(5, 7) - 1] + ' ' + p.props.datum.slice(0, 4) : 'ohne Datum';
       if (m !== mon) { mon = m; tl.append(h('div', { class: 'tlm' }, m)); }
       tl.append(h('div', { class: 'tli', onclick: () => go(p.id) }, h('span', { class: 'tld' }, kurzDatum(p.props.datum)), h('span', { class: 'dot' }),
-        h('span', { class: 'tlt' }, h('span', { class: 'ci' }, p.icon), p.title), h('span', { class: 'tlc' }, chip(p.props.thema, THEMEN), p.props.art && p.props.art !== 'Unterricht' ? chip(p.props.art, ARTEN) : '')));
+        h('span', { class: 'tlt' }, h('span', { class: 'ci' }, p.icon), p.title), h('span', { class: 'tlc' + (EDIT ? ' ed' : ''), title: EDIT ? 'Begriffe ändern' : '', onclick: EDIT ? ev => { ev.stopPropagation(); tagPop(ev.currentTarget, p); } : null }, chip(p.props.thema, THEMEN), ...tagsOf(p).map(tagChip), EDIT ? h('span', { class: 'tagplus' }, '+') : '')));
     });
     wrap.append(tl);
   }
@@ -1028,7 +1055,7 @@ async function publish(btn) {
     const tree = await ghApi('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: [{ path: 'data.json', mode: '100644', type: 'blob', sha: blob.sha }] }) });
     const neu = await ghApi('/git/commits', { method: 'POST', body: JSON.stringify({ message: 'Änderungen', tree: tree.sha, parents: [head] }) });
     await ghApi('/git/refs/heads/main', { method: 'PATCH', body: JSON.stringify({ sha: neu.sha }) });
-    BASE = JSON.parse(JSON.stringify(data)); DOC.base = data.stamp; DOC.stamp = data.stamp; save(false); clearTimeout(histT); histT = null; LAST = JSON.stringify(DOC); updHist();
+    BASE = JSON.parse(JSON.stringify(data)); try { localStorage.setItem(BKEY, JSON.stringify(BASE)); } catch (er) { } DOC.base = data.stamp; DOC.stamp = data.stamp; save(false); clearTimeout(histT); histT = null; LAST = JSON.stringify(DOC); updHist();
     btn.textContent = 'Veröffentlicht ✓';
     setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 4000);
   } catch (er) {
@@ -1055,19 +1082,104 @@ async function checkOwner() {
   }
   try { return localStorage.getItem(OWNER_FLAG) === OWNER_HASH; } catch (e) { return false; }
 }
+const J = x => JSON.stringify(x === undefined ? null : x);
+function mergeFields(o, l, n, skip) {
+  const r = {};
+  new Set([...Object.keys(n || {}), ...Object.keys(l || {})]).forEach(k => {
+    if (skip.includes(k)) return;
+    const lv = (l || {})[k], ov = (o || {})[k], nv = (n || {})[k];
+    const v = J(lv) !== J(ov) ? lv : nv;
+    if (v !== undefined) r[k] = JSON.parse(J(v));
+  });
+  return r;
+}
+function mergeList(o, l, n) {
+  o = o || []; l = l || []; n = n || [];
+  const om = new Map(o.map(b => [b.id, b])), nm = new Map(n.map(b => [b.id, b]));
+  const out = [];
+  l.forEach(lb => {
+    const ob = om.get(lb.id), nb = nm.get(lb.id);
+    if (ob && !nb) return;
+    if (!ob && !nb) { out.push(JSON.parse(J(lb))); return; }
+    const m = mergeFields(ob, lb, nb, ['children']);
+    if (lb.children || nb.children) m.children = mergeList(ob && ob.children, lb.children, nb.children);
+    out.push(m);
+  });
+  n.forEach((nb, i) => {
+    if (om.has(nb.id) || out.some(b => b.id === nb.id)) return;
+    let at = 0;
+    for (let j = i - 1; j >= 0; j--) { const k = out.findIndex(b => b.id === n[j].id); if (k >= 0) { at = k + 1; break; } }
+    out.splice(at, 0, JSON.parse(J(nb)));
+  });
+  return out;
+}
+function merge3(o, l, n) {
+  const r = JSON.parse(J(n));
+  Object.keys(l.pages || {}).forEach(id => {
+    const op = o.pages[id], lp = l.pages[id], np = n.pages[id];
+    if (!op && !np) { r.pages[id] = JSON.parse(J(lp)); return; }
+    if (op && !np) return;
+    if (!op) return;
+    const m = mergeFields(op, lp, np, ['blocks', 'props']);
+    if (lp.props || np.props) m.props = mergeFields(op.props, lp.props, np.props, []);
+    m.blocks = mergeList(op.blocks, lp.blocks, np.blocks);
+    r.pages[id] = m;
+  });
+  Object.keys(o.pages || {}).forEach(id => { if (!(l.pages || {})[id] && r.pages[id] && id !== 'home') delete r.pages[id]; });
+  if (J(l.rows) !== J(o.rows)) {
+    const rows = (l.rows || []).filter(id => r.pages[id]);
+    (n.rows || []).forEach(id => { if (!rows.includes(id) && !(o.rows || []).includes(id) && r.pages[id]) rows.push(id); });
+    r.rows = rows;
+  }
+  return r;
+}
+const BKEY = KEY + '-base';
+async function findBase(stamp) {
+  try { const b = JSON.parse(localStorage.getItem(BKEY)); if (b && b.stamp === stamp) return b; } catch (er) { }
+  try {
+    const list = await (await fetch('https://api.github.com/repos/' + REPO + '/commits?path=data.json&per_page=40')).json();
+    for (const c of list) {
+      if (!/^[0-9a-f]{40}$/.test(c.sha)) continue;
+      const r = await fetch('https://raw.githubusercontent.com/' + REPO + '/' + c.sha + '/data.json');
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d && d.stamp === stamp) return d;
+    }
+  } catch (er) { }
+  return null;
+}
+function backupKey(s) { return KEY + '-alt-' + (s.base || 'x') + '-' + Date.now(); }
+async function mergeOld(owner) {
+  if (!owner) return;
+  let s = null; try { s = JSON.parse(localStorage.getItem(KEY)); } catch (er) { }
+  let alt = null; try { alt = JSON.parse(localStorage.getItem(KEY + '-alt')); } catch (er) { }
+  const newer = s && s.pages && s.base && s.base[0] === 'x' && (BASE.stamp[0] !== 'x' || +s.base.slice(1) > +BASE.stamp.slice(1));
+  if (newer) { DOC = s; return; }
+  const cand = [];
+  if (alt && alt.pages) cand.push({ key: KEY + '-alt', d: alt });
+  if (s && s.pages) cand.push({ key: KEY, d: s });
+  let failed = false;
+  for (const c of cand) {
+    const o = c.d.base === BASE.stamp ? BASE : await findBase(c.d.base);
+    if (c.d.base !== BASE.stamp || c.key !== KEY) { try { localStorage.setItem(backupKey(c.d), JSON.stringify(c.d)); } catch (er) { } }
+    if (c.key !== KEY) { try { localStorage.removeItem(c.key); } catch (er) { } }
+    if (!o) { failed = true; continue; }
+    try { DOC = merge3(o, c.d, DOC); } catch (er) { failed = true; }
+  }
+  DOC.base = BASE.stamp;
+  try { localStorage.setItem(BKEY, JSON.stringify(BASE)); localStorage.setItem(KEY, JSON.stringify(DOC)); } catch (er) { }
+  if (failed) setTimeout(() => alert('Ein älterer Stand konnte nicht automatisch übernommen werden. Er ist gesichert (••• → Ältere Stände herunterladen).'), 500);
+}
+function backups() { const r = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(KEY + '-alt')) r.push(k); } } catch (er) { } return r.sort(); }
+function download(name, text) { const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name }); document.body.append(a); a.click(); a.remove(); }
+window.addEventListener('pagehide', () => { if (saveT) { clearTimeout(saveT); saveT = null; persist(); } });
 async function start() {
   const owner = await checkOwner();
   BASE = buildDoc();
   try { const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && d.pages && d.stamp) BASE = d; } } catch (e) { }
   DOC = BASE;
-  if (owner) {
-    try {
-      const s = JSON.parse(localStorage.getItem(KEY));
-      const newer = s && s.base && s.base[0] === 'x' && (BASE.stamp[0] !== 'x' || +s.base.slice(1) > +BASE.stamp.slice(1));
-      if (s && s.pages && (s.base === BASE.stamp || newer)) DOC = s;
-      else if (s && s.pages) localStorage.setItem(KEY + '-alt', JSON.stringify(s));
-    } catch (e) { }
-  }
+  DOC = JSON.parse(JSON.stringify(BASE));
+  if (owner) await mergeOld(owner);
   DOC.base = BASE.stamp;
   CUR = location.hash.slice(1) || 'home';
   if (!owner) { $('#editbtn').remove(); $('#more').remove(); $('#undo').remove(); $('#redo').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
@@ -1081,7 +1193,8 @@ async function start() {
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
     if (localStorage.getItem(TKEY)) it('Veröffentlichen', () => publish($('#editbtn')));
     else it('Veröffentlichen einrichten', () => { const t = prompt('GitHub-Token (Contents: Read and write für das Repo):'); if (t && t.trim()) { localStorage.setItem(TKEY, t.trim()); } });
-    if (localStorage.getItem(KEY + '-alt')) it('Ältere Änderungen exportieren', () => { const a = h('a', { href: URL.createObjectURL(new Blob([localStorage.getItem(KEY + '-alt')], { type: 'application/json' })), download: 'data-alt.json' }); document.body.append(a); a.click(); a.remove(); });
+    it('Sicherung herunterladen', () => download('forschungstagebuch-sicherung-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(DOC)));
+    if (backups().length) it('Ältere Stände herunterladen (' + backups().length + ')', () => backups().forEach((k, i) => setTimeout(() => download('stand-' + (i + 1) + '.json', localStorage.getItem(k)), i * 400)));
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
     it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } commitHist(); UNDO.push(LAST); DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; LAST = JSON.stringify(DOC); REDO = []; persist(); render(); updHist(); } }, 'danger');
   };
