@@ -421,7 +421,7 @@ const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['the
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
 function newPage() {
   const id = 'p' + uid(); const d = new Date();
-  DOC.pages[id] = { id, title: '', icon: '📄', bgPat: 'dots', bgColor: 'sand', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
+  DOC.pages[id] = { id, title: '', icon: '', bgPat: 'dots', bgColor: 'sand', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
   DOC.rows.push(id); save(false); go(id); setTimeout(() => { const t = $('.ptitle'); if (t) t.focus(); }, 30);
 }
 function dbEl(b) {
@@ -613,7 +613,7 @@ function panelPages(B) {
   const list = h('div', { class: 'plist' });
   const pages = [DOC.pages.home, ...DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), ...Object.values(DOC.pages).filter(p => p.id !== 'home' && !DOC.rows.includes(p.id))];
   pages.forEach(p => list.append(h('div', { class: 'pli' + (p.id === CUR ? ' on' : '') },
-    h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, h('span', { class: 'ci' }, p.icon || '📄'), ' ', p.title || 'Unbenannt'),
+    h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, p.icon ? h('span', { class: 'ci' }, p.icon, ' ') : '', p.title || 'Unbenannt'),
     p.id !== 'home' ? h('button', { class: 'pb danger', title: 'Seite löschen', onclick: () => deletePage(p.id) }, '×') : null)));
   B.append(list, pc(pbtn('+ Neue Seite', newPage)));
   B.append(h('div', { class: 'psep' }), plabel('Speichern'), h('p', { class: 'pmut' }, 'Änderungen werden in diesem Browser gespeichert. Für die öffentliche Seite als data.json exportieren.'),

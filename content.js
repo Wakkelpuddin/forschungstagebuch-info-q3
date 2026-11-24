@@ -1,5 +1,5 @@
 'use strict';
-const CONTENT_VERSION = 7;
+const CONTENT_VERSION = 8;
 
 const START = {
   id: 'home', title: 'Forschungstagebuch Informatik Q3', icon: '📓', cover: true, edited: '15.11.2026 14:22',
@@ -11,7 +11,7 @@ const START = {
 
 const EINTRAEGE = [
 
-{ id: 'e0812', title: 'Start: Alan Turing und Bereiche der Informatik', icon: '🧠', datum: '2026-08-12', thema: 'Einstieg', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '12.08.2026 19:14',
+{ id: 'e0812', title: 'Start: Alan Turing und Bereiche der Informatik', icon: '', datum: '2026-08-12', thema: 'Einstieg', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '12.08.2026 19:14',
   blocks: [
     ['p', 'Erste Stunde in Q3. Das neue Thema ist <b>theoretische Informatik</b>. Damit man weiß, wo das überhaupt einzuordnen ist, haben wir zuerst besprochen, aus welchen Bereichen die Informatik besteht. Danach ging es um Alan Turing und am Ende haben wir schon mit endlichen Automaten angefangen.'],
     ['h3', 'Die Bereiche der Informatik'],
@@ -38,7 +38,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Am Anfang konnte ich mir unter „theoretischer Informatik“ wenig vorstellen, weil wir bisher immer etwas Praktisches gebaut haben. Das Drehkreuz-Beispiel hat geholfen, weil es so einfach ist und man trotzdem schon sieht, wie ein Automat funktioniert. Offen ist für mich noch, wie man so etwas genauer aufschreibt, damit man es auch mathematisch prüfen kann.'],
   ] },
 
-{ id: 'z-ea', title: 'Themenzettel: Endliche Automaten', icon: '📘', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '27.08.2026 20:10',
+{ id: 'z-ea', title: 'Themenzettel: Endliche Automaten', icon: '', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '27.08.2026 20:10',
   blocks: [
     ['p', 'Hier habe ich alles Wichtige zu endlichen Automaten (Akzeptoren) gesammelt. Mit den Aufgaben unten kann man testen, ob man es verstanden hat. Die Lösungen sind eingeklappt.'],
     ['h3', 'Was ist ein endlicher Automat?'],
@@ -88,7 +88,7 @@ const EINTRAEGE = [
     ]],
   ] },
 
-{ id: 'e0819', title: 'Lachautomat und erste Automaten', icon: '😂', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: 'FLACI, AutoEdit', gefuehl: 'gut', art: 'Unterricht', edited: '20.08.2026 17:52',
+{ id: 'e0819', title: 'Lachautomat und erste Automaten', icon: '', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: 'FLACI, AutoEdit', gefuehl: 'gut', art: 'Unterricht', edited: '20.08.2026 17:52',
   blocks: [
     ['p', 'Heute ging es richtig mit endlichen Automaten los (Lernpaket „Endliche Automaten – Akzeptoren“). Ein Automat liest ein Wort Buchstabe für Buchstabe und springt dabei von Zustand zu Zustand. Wenn das Wort zu Ende ist und er in einem Endzustand steht, wird das Wort <b>akzeptiert</b>. Gibt es für ein Zeichen keinen Übergang, ist das Wort sofort raus. Die Theorie habe ich im <b>Themenzettel Endliche Automaten</b> zusammengefasst.'],
     ['p', 'Unser Beispiel war der <b>Lachautomat</b>. Er akzeptiert ha!, haha!, hahaha! usw.'],
@@ -130,7 +130,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Gut gelungen ist mir das Bauen der Automaten in FLACI, vor allem der ha/hi/ho-Automat. Schwieriger war es, eine Sprache genau zu beschreiben. Bei Aufgabe 1 war meine erste Beschreibung zu ungenau, das habe ich erst mit einem Gegenbeispiel gemerkt. Ab jetzt teste ich meine Beschreibungen immer mit einem Wort, das nicht dazugehören soll.'],
   ] },
 
-{ id: 'e0826', title: 'Aufgabe 4: Tabelle, Klassennamen, „kein bb“', icon: '🔢', datum: '2026-08-26', thema: 'Endliche Automaten', werkzeug: 'FLACI, Heft', gefuehl: 'schwer', art: 'Unterricht', edited: '27.08.2026 21:03',
+{ id: 'e0826', title: 'Aufgabe 4: Tabelle, Klassennamen, „kein bb“', icon: '', datum: '2026-08-26', thema: 'Endliche Automaten', werkzeug: 'FLACI, Heft', gefuehl: 'schwer', art: 'Unterricht', edited: '27.08.2026 21:03',
   blocks: [
     ['p', 'Heute ging es mit Aufgabe 4 weiter. a) bis c) waren Pflicht, d) war freiwillig.'],
     ['toggle', 'a) Von der Übergangstabelle zum Graphen', [
@@ -172,7 +172,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Die Stunde war schwerer als letzte Woche. Am meisten Zeit hat d) gekostet, weil ich erst gedacht habe, es geht um das zweite Zeichen von links. Gut war, dass ich bei b) gemerkt habe, dass „10“ zwei Zeichen sind. Ich habe gelernt, vor dem Zeichnen zuerst zu überlegen, was sich der Automat merken muss.'],
   ] },
 
-{ id: 'z-regex', title: 'Themenzettel: Reguläre Ausdrücke', icon: '📗', datum: '2026-09-02', thema: 'Reguläre Ausdrücke', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '03.09.2026 19:22',
+{ id: 'z-regex', title: 'Themenzettel: Reguläre Ausdrücke', icon: '', datum: '2026-09-02', thema: 'Reguläre Ausdrücke', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '03.09.2026 19:22',
   blocks: [
     ['p', 'Ein regulärer Ausdruck beschreibt eine Sprache als <b>Muster</b>. Er besteht aus normalen Zeichen und Metazeichen. Endliche Automaten und reguläre Ausdrücke können genau die gleichen Sprachen beschreiben (die regulären Sprachen).'],
     ['h3', 'Metazeichen'],
@@ -205,7 +205,7 @@ const EINTRAEGE = [
     ]],
   ] },
 
-{ id: 'e0902', title: 'Reguläre Ausdrücke', icon: '🔍', datum: '2026-09-02', thema: 'Reguläre Ausdrücke', werkzeug: 'regex101, FLACI', gefuehl: 'gut', art: 'Unterricht', edited: '02.09.2026 16:20',
+{ id: 'e0902', title: 'Reguläre Ausdrücke', icon: '', datum: '2026-09-02', thema: 'Reguläre Ausdrücke', werkzeug: 'regex101, FLACI', gefuehl: 'gut', art: 'Unterricht', edited: '02.09.2026 16:20',
   blocks: [
     ['p', 'Neues Thema: reguläre Ausdrücke. Damit beschreibt man eine Sprache als <b>Muster</b>. Das benutzt man z. B. um Eingaben in Formularen zu prüfen. Die Metazeichen stehen im <b>Themenzettel Reguläre Ausdrücke</b>. Getestet habe ich alles mit regex101.'],
     ['h3', 'Aufgabe 1'],
@@ -244,7 +244,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Reguläre Ausdrücke fand ich praktischer als Automaten, weil man sie wirklich benutzt. regex101 war sehr hilfreich, weil man sofort sieht, welche Wörter passen. Aufgefallen ist mir, dass ich zu jedem Ausdruck auch einen Automaten bauen könnte. Ich vermute, dass beide genau das Gleiche können.'],
   ] },
 
-{ id: 'z-gram', title: 'Themenzettel: Grammatiken', icon: '📙', datum: '2026-09-09', thema: 'Grammatiken', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '11.09.2026 17:48',
+{ id: 'z-gram', title: 'Themenzettel: Grammatiken', icon: '', datum: '2026-09-09', thema: 'Grammatiken', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '11.09.2026 17:48',
   blocks: [
     ['p', 'Automaten und reguläre Ausdrücke <b>prüfen</b> Wörter. Eine Grammatik <b>erzeugt</b> Wörter: Man startet beim Startsymbol und ersetzt so lange, bis nur noch Terminale dastehen.'],
     ['h3', 'Aufbau: G = (N, T, P, S)'],
@@ -283,7 +283,7 @@ const EINTRAEGE = [
     ]],
   ] },
 
-{ id: 'e0909', title: 'Grammatiken (Arbeitsauftrag)', icon: '🌳', datum: '2026-09-09', thema: 'Grammatiken', werkzeug: 'Heft', gefuehl: 'mittel', art: 'Arbeitsauftrag', edited: '10.09.2026 18:31',
+{ id: 'e0909', title: 'Grammatiken (Arbeitsauftrag)', icon: '', datum: '2026-09-09', thema: 'Grammatiken', werkzeug: 'Heft', gefuehl: 'mittel', art: 'Arbeitsauftrag', edited: '10.09.2026 18:31',
   blocks: [
     ['callout', 'ℹ️', 'blue', 'Die Stunde ist ausgefallen. Wir hatten aber einen Arbeitsauftrag in Moodle (Lernpaket Grammatiken), den habe ich zuhause gemacht.'],
     ['p', 'Automaten und reguläre Ausdrücke <b>prüfen</b>, ob ein Wort zu einer Sprache gehört. Eine Grammatik macht es andersrum: Sie <b>erzeugt</b> die Wörter Schritt für Schritt aus einem Startsymbol. Die Theorie steht im <b>Themenzettel Grammatiken</b>.'],
@@ -330,7 +330,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Das war das erste Mal, dass wir eine Sprache hatten, für die es keinen Automaten gibt. Allein zu arbeiten war etwas mühsam, Aufgabe 3b musste ich zweimal lesen, bis ich die Begründung verstanden hatte. Gut gelungen ist mir Ipogesien, weil ich das Muster mit den i gefunden habe, statt alles auszuprobieren.'],
   ] },
 
-{ id: 'z-mealy', title: 'Themenzettel: Automaten mit Ausgabe', icon: '📒', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '25.09.2026 18:05',
+{ id: 'z-mealy', title: 'Themenzettel: Automaten mit Ausgabe', icon: '', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '25.09.2026 18:05',
   blocks: [
     ['h3', 'Akzeptor oder Transduktor?'],
     ['table', [['', 'Akzeptor', 'Transduktor (Mealy)'], ['Ergebnis', 'am Ende ja oder nein', 'bei jedem Schritt eine Ausgabe'], ['Endzustände', 'ja, wichtig', 'nicht nötig'], ['Beschriftung', 'a', 'a / x (Eingabe / Ausgabe)'], ['Beispiel', 'Klassennamen prüfen', 'Getränkeautomat, Wechselgeld']]],
@@ -359,7 +359,7 @@ const EINTRAEGE = [
     ]],
   ] },
 
-{ id: 'e0923', title: 'Automaten mit Ausgabe (Mealy)', icon: '🥤', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: 'FLACI', gefuehl: 'mittel', art: 'Unterricht', edited: '24.09.2026 20:45',
+{ id: 'e0923', title: 'Automaten mit Ausgabe (Mealy)', icon: '', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: 'FLACI', gefuehl: 'mittel', art: 'Unterricht', edited: '24.09.2026 20:45',
   blocks: [
     ['p', 'Bisher haben unsere Automaten am Ende nur „ja“ oder „nein“ gesagt (Akzeptoren). Heute ging es um Automaten, die bei jedem Schritt etwas <b>ausgeben</b>. Beim <b>Mealy-Automaten</b> steht die Ausgabe direkt am Übergang: <code>Eingabe / Ausgabe</code>. Die Grundlagen stehen im <b>Themenzettel Automaten mit Ausgabe</b>.'],
     ['toggle', 'Aufgabe 1 – Getränkeautomat (1,50 €)', [
@@ -390,7 +390,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Mealy-Automaten fand ich anschaulicher als die Akzeptoren, weil man sich echte Geräte vorstellen kann. Schwieriger war, dass die Aufgaben nicht alles eindeutig beschreiben, z. B. was beim Getränkeautomaten mit zu viel Geld passiert. Da musste ich selbst entscheiden und das dazuschreiben. Beim Fahrkartenautomaten hatte ich zuerst vergessen, dass bei 1 € + 1 € Wechselgeld rauskommen muss, das ist mir beim Testen aufgefallen.'],
   ] },
 
-{ id: 'z-syn', title: 'Themenzettel: Syntaxdiagramme', icon: '📕', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '02.10.2026 16:37',
+{ id: 'z-syn', title: 'Themenzettel: Syntaxdiagramme', icon: '', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '02.10.2026 16:37',
   blocks: [
     ['p', 'Ein Syntaxdiagramm zeigt die Regeln einer Sprache als Bild, ähnlich wie ein Gleisplan. Man fährt von links nach rechts in Pfeilrichtung, jeder Weg vom Eingang zum Ausgang ergibt ein gültiges Wort.'],
     ['h3', 'Bausteine'],
@@ -418,7 +418,7 @@ const EINTRAEGE = [
     ]],
   ] },
 
-{ id: 'e0930', title: 'Syntaxdiagramme', icon: '🚂', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '01.10.2026 17:05',
+{ id: 'e0930', title: 'Syntaxdiagramme', icon: '', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '01.10.2026 17:05',
   blocks: [
     ['p', 'Ein Syntaxdiagramm zeigt eine Grammatik als Bild. Weil es wie ein Gleisplan aussieht, heißt es auch Railroad-Diagramm. Die Bausteine und Grundstrukturen stehen im <b>Themenzettel Syntaxdiagramme</b>.'],
     ['p', 'Als Einstieg hatten wir das Beispiel „Bezeichner“ (Variablenname): erst ein Buchstabe, danach beliebig viele Buchstaben oder Ziffern. x2a ist gültig, 2x nicht, weil am Anfang kein Buchstabe steht.'],
@@ -457,7 +457,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Heute hat vieles zusammengepasst: Syntaxdiagramm ohne Rekursion ist dasselbe wie ein regulärer Ausdruck, mit Rekursion dasselbe wie eine Grammatik. Dass die mathematisch korrekten ipigisi-Ausdrücke genau Ipogesien sind, hat mich überrascht. Schwierig fand ich die langen Wegbeschreibungen, weil man leicht einen Schritt vergisst.'],
   ] },
 
-{ id: 'z-rm', title: 'Themenzettel: Registermaschine', icon: '📓', datum: '2026-10-28', thema: 'Registermaschine', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '06.11.2026 18:12',
+{ id: 'z-rm', title: 'Themenzettel: Registermaschine', icon: '', datum: '2026-10-28', thema: 'Registermaschine', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '06.11.2026 18:12',
   blocks: [
     ['p', 'Die Registermaschine ist ein Modell, das schon sehr nah an einem echten Prozessor ist. Anders als ein endlicher Automat kann sie sich beliebig große Zahlen merken.'],
     ['h3', 'Aufbau'],
@@ -493,7 +493,7 @@ const EINTRAEGE = [
     ['toggle', '5) Ein Programm braucht 2 Befehle vor der Schleife, 6 pro Durchlauf und 3 am Ende. Die Schleife läuft n-mal. Wie viele Befehle insgesamt?', [['p', '<b>Lösung:</b> Zeit(n) = 6 · n + 5']]],
   ] },
 
-{ id: 'e1028', title: 'Registermaschine: Anfang', icon: '🧮', datum: '2026-10-28', thema: 'Registermaschine', werkzeug: 'RM-Simulator, Heft', gefuehl: 'mittel', art: 'Unterricht', edited: '29.10.2026 19:40',
+{ id: 'e1028', title: 'Registermaschine: Anfang', icon: '', datum: '2026-10-28', thema: 'Registermaschine', werkzeug: 'RM-Simulator, Heft', gefuehl: 'mittel', art: 'Unterricht', edited: '29.10.2026 19:40',
   blocks: [
     ['p', 'Nach den Herbstferien ging das letzte Thema los: die <b>Registermaschine</b>. Aufbau, Befehle und Operanden stehen im <b>Themenzettel Registermaschine</b>. Zum Einstieg hatten wir den Vergleich mit einem Taschenrechner mit Speichertaste: Die Anzeige ist der Akku, der Speicher ist ein Register.'],
     ['code', 'LOAD #3\nMUL #4\nSTORE 1     // 3 · 4 = 12 in R1\nLOAD #5\nMUL #6\nADD 1       // 30 + 12 = 42\nEND'],
@@ -519,7 +519,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Die Registermaschine fühlt sich eher wie Programmieren an als die Automaten. Beide Fehler heute kamen daher, dass ich zu schnell war: einmal aus einem Testwert eine Regel gemacht und einmal #1 und 1 verwechselt. Ab jetzt mache ich das Protokoll zuerst auf Papier und kontrolliere dann mit dem Simulator.'],
   ] },
 
-{ id: 'e1104', title: 'Registermaschine: Fehlersuche und if/else', icon: '🐞', datum: '2026-11-04', thema: 'Registermaschine', werkzeug: 'RM-Simulator', gefuehl: 'gut', art: 'Unterricht', edited: '05.11.2026 16:58',
+{ id: 'e1104', title: 'Registermaschine: Fehlersuche und if/else', icon: '', datum: '2026-11-04', thema: 'Registermaschine', werkzeug: 'RM-Simulator', gefuehl: 'gut', art: 'Unterricht', edited: '05.11.2026 16:58',
   blocks: [
     ['h3', 'Aufgabe 2.3 – Fehlersuche'],
     ['p', 'Das Programm sollte 2ⁿ berechnen, hat bei n = 3 aber 4 statt 8 ausgegeben. Der Fehler: Es hat zuerst runtergezählt und erst danach geprüft, ob R1 = 0 ist. Dadurch fehlt am Ende eine Verdopplung.'],
@@ -550,7 +550,7 @@ const EINTRAEGE = [
     ['p', '<b>Reflexion:</b> Heute lag die Schwierigkeit fast immer am Rand: n = 0, r1 = r2 + 17 und (7, 7). Gut gelungen ist mir die Fehlersuche, weil ich das Protokoll für n = 3 gemacht habe und dann genau gesehen habe, wo eine Verdopplung fehlt. Ich teste jetzt bei Bedingungen immer den Fall „genau gleich“ extra.'],
   ] },
 
-{ id: 'e1111', title: 'Klausurvorbereitung: Probeklausur', icon: '📝', datum: '2026-11-11', thema: 'Klausur', werkzeug: 'Heft, RM-Simulator', gefuehl: 'mittel', art: 'Unterricht', edited: '15.11.2026 14:22',
+{ id: 'e1111', title: 'Klausurvorbereitung: Probeklausur', icon: '', datum: '2026-11-11', thema: 'Klausur', werkzeug: 'Heft, RM-Simulator', gefuehl: 'mittel', art: 'Unterricht', edited: '15.11.2026 14:22',
   blocks: [
     ['p', 'Heute haben wir für die Klausur geübt. Ich habe die Probeklausur aus Moodle wie eine echte gemacht: 90 Minuten Timer, auf Papier, ohne Tipps. Danach habe ich mit dem Erwartungshorizont verglichen.'],
     ['ol', 'Signaturen in der Schulbibliothek (Syntaxdiagramm, Automat, regulärer Ausdruck)'],
