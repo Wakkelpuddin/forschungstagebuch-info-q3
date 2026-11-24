@@ -63,7 +63,7 @@ function buildDoc() {
   const pages = {};
   const mk = (p, extra) => Object.assign({ id: p.id, title: p.title, icon: p.icon, cover: !!p.cover, coverColor: p.cover ? 'karamell' : undefined, bgPat: 'dots', bgColor: 'sand', edited: p.edited, blocks: p.blocks.map(nb) }, extra);
   pages.home = mk(START);
-  EINTRAEGE.forEach(e => pages[e.id] = mk(e, { props: { datum: e.datum, thema: e.thema, werkzeug: e.werkzeug, gefuehl: e.gefuehl, art: e.art }, hide: e.art === 'Themenzettel' ? ['werkzeug', 'gefuehl'] : [] }));
+  EINTRAEGE.forEach(e => pages[e.id] = mk(e, { props: { datum: e.datum, thema: e.thema, werkzeug: e.werkzeug, gefuehl: e.gefuehl, art: e.art }, hide: ['werkzeug', 'gefuehl', 'art'] }));
   EXTRA.forEach(e => pages[e.id] = mk(e));
   return { stamp: 'c' + CONTENT_VERSION, pages, rows: EINTRAEGE.map(e => e.id) };
 }
@@ -421,7 +421,7 @@ const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['the
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
 function newPage() {
   const id = 'p' + uid(); const d = new Date();
-  DOC.pages[id] = { id, title: '', icon: '', bgPat: 'dots', bgColor: 'sand', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
+  DOC.pages[id] = { id, title: '', icon: '', bgPat: 'dots', bgColor: 'sand', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, hide: ['werkzeug', 'gefuehl', 'art'], blocks: [nb(['p'])] };
   DOC.rows.push(id); save(false); go(id); setTimeout(() => { const t = $('.ptitle'); if (t) t.focus(); }, 30);
 }
 function dbEl(b) {
