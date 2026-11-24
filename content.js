@@ -1,5 +1,5 @@
 'use strict';
-const CONTENT_VERSION = 6;
+const CONTENT_VERSION = 7;
 
 const START = {
   id: 'home', title: 'Forschungstagebuch Informatik Q3', icon: '📓', cover: true, edited: '15.11.2026 14:22',

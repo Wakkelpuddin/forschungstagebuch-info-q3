@@ -61,7 +61,7 @@ function nb(a) {
 }
 function buildDoc() {
   const pages = {};
-  const mk = (p, extra) => Object.assign({ id: p.id, title: p.title, icon: p.icon, cover: !!p.cover, edited: p.edited, blocks: p.blocks.map(nb) }, extra);
+  const mk = (p, extra) => Object.assign({ id: p.id, title: p.title, icon: p.icon, cover: !!p.cover, coverColor: p.cover ? 'karamell' : undefined, bgPat: 'dots', bgColor: 'sand', edited: p.edited, blocks: p.blocks.map(nb) }, extra);
   pages.home = mk(START);
   EINTRAEGE.forEach(e => pages[e.id] = mk(e, { props: { datum: e.datum, thema: e.thema, werkzeug: e.werkzeug, gefuehl: e.gefuehl, art: e.art }, hide: e.art === 'Themenzettel' ? ['werkzeug', 'gefuehl'] : [] }));
   EXTRA.forEach(e => pages[e.id] = mk(e));
@@ -170,7 +170,7 @@ function render() {
 }
 let NOPANEL = false;
 function renderPage() { NOPANEL = true; try { render(); } finally { NOPANEL = false; } }
-const COVERS = { weiss: ['#ffffff', '#e3e2de'], sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
+const COVERS = { weiss: ['#ffffff', '#e3e2de'], karamell: ['#e8d8b6', '#d3bd8d'], sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
 const PATTERNS = [['', 'Keins'], ['dots', 'Punkte'], ['lines', 'Linien'], ['grid', 'Kariert'], ['plain', 'Einfarbig']];
 function applyPat(el, pat, color) {
   el.classList.remove('pat', 'pt-dots', 'pt-lines', 'pt-grid', 'pt-plain');
@@ -421,7 +421,7 @@ const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['the
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
 function newPage() {
   const id = 'p' + uid(); const d = new Date();
-  DOC.pages[id] = { id, title: '', icon: '📄', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
+  DOC.pages[id] = { id, title: '', icon: '📄', bgPat: 'dots', bgColor: 'sand', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
   DOC.rows.push(id); save(false); go(id); setTimeout(() => { const t = $('.ptitle'); if (t) t.focus(); }, 30);
 }
 function dbEl(b) {
