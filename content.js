@@ -1,6 +1,6 @@
 'use strict';
 /* Inhalt des Forschungstagebuchs. Blöcke: [typ, ...] */
-const CONTENT_VERSION = 3;
+const CONTENT_VERSION = 4;
 
 const START = {
   id: 'home', title: 'Forschungstagebuch Informatik Q3', icon: '📓', cover: true, edited: '15.11.2026 14:22',
@@ -8,9 +8,6 @@ const START = {
     ['p', 'Leo Widmann · Informatik GK Q3 · 12.08. – 11.11.2026'],
     ['callout', '💡', 'gray', 'Hier dokumentiere ich alles, was wir in Q3 praktisch gemacht haben. Jeder Termin hat eine eigene Seite. Oben kann man zwischen Zeitstrahl, Tabelle und Themen umschalten.'],
     ['db'],
-    ['hr'],
-    ['link', 'rueckblick'],
-    ['link', 'checkliste'],
   ]
 };
 
@@ -338,47 +335,4 @@ const EINTRAEGE = [
   ] },
 ];
 
-const EXTRA = [
-{ id: 'rueckblick', title: 'Rückblick', icon: '💭', edited: '15.11.2026 14:40',
-  blocks: [
-    ['p', 'Am Anfang (12.08.) hatte ich mir die Frage gestellt, was so eine Maschine eigentlich kann und was nicht. Nach dem Halbjahr würde ich sagen: Das hängt vor allem davon ab, <b>wie viel sie sich merken kann</b>.'],
-    ['ul', '<b>Endlicher Automat:</b> nur endlich viele Zustände. Reicht für Klassennamen oder „vorletzte Ziffer 0“, aber nicht für Palindrome oder „gleich viele h und r“.'],
-    ['ul', '<b>Regulärer Ausdruck, reguläre Grammatik, Syntaxdiagramm ohne Rekursion:</b> können genau dasselbe wie ein endlicher Automat. Ich konnte jedes Mal das eine ins andere übersetzen.'],
-    ['ul', '<b>Grammatik mit Rekursion</b> (S → aSa): kann mehr, weil links und rechts gleichzeitig etwas dazukommt.'],
-    ['ul', '<b>Registermaschine:</b> kann sich beliebig große Zahlen merken und ist damit so stark wie ein normaler Computer (und wie Turings Maschine vom Anfang).'],
-    ['h3', 'Was mir schwer gefallen ist'],
-    ['p', 'Am schwersten war der 26.08. (Klassennamen und „vorletzte Ziffer“), weil man da erst überlegen muss, was sich der Automat merken muss. Bei der Registermaschine waren es eher Flüchtigkeitsfehler, z. B. LOAD 1 und LOAD #1 verwechselt.'],
-    ['h3', 'Was ich mitnehme'],
-    ['ul', 'Lösungen immer auch mit Wörtern testen, die <i>nicht</i> passen dürfen'],
-    ['ul', 'Randfälle extra prüfen (0, „genau gleich“)'],
-    ['ul', 'aus einem einzigen Beispiel keine Regel machen (siehe „immer 2“ am 28.10.)'],
-    ['p', 'Am besten fand ich die Momente, wo zwei Themen plötzlich dasselbe waren, z. B. Ipogesien und die ipigisi-Ausdrücke.'],
-  ] },
-{ id: 'checkliste', title: 'Was ich kann (Checkliste)', icon: '✅', edited: '15.11.2026 14:31',
-  blocks: [
-    ['p', 'Aus der Themenübersicht zur Klausur. Abgehakt habe ich, was ich ohne Hilfe kann.'],
-    ['h3', 'Endliche Automaten'],
-    ['todo', 'DEA als 5-Tupel angeben und erklären', true],
-    ['todo', 'Wort durch einen Automaten verfolgen (Konfigurationsfolge)', true],
-    ['todo', 'Sprache eines Automaten beschreiben', true],
-    ['todo', 'DEA selbst entwerfen, auch mit Zählzuständen oder „Merk-Zuständen“', true],
-    ['todo', 'begründen, warum es z. B. für Palindrome keinen Automaten gibt', true],
-    ['h3', 'Mealy-Automaten'],
-    ['todo', 'Ablauf als Mealy-Automat modellieren (Eingabe / Ausgabe)', true],
-    ['todo', 'Mealy-Automat als 6-Tupel angeben', false],
-    ['h3', 'Reguläre Ausdrücke'],
-    ['todo', 'Metazeichen anwenden', true],
-    ['todo', 'regulären Ausdruck in Automaten übersetzen und umgekehrt', true],
-    ['h3', 'Grammatiken und Syntaxdiagramme'],
-    ['todo', 'Ableitung und Ableitungsbaum', true],
-    ['todo', 'regulär oder kontextfrei unterscheiden', true],
-    ['todo', 'Syntaxdiagramme lesen und selbst entwerfen', true],
-    ['todo', 'zwischen Syntaxdiagramm, Grammatik und Automat übersetzen', false],
-    ['h3', 'Registermaschine'],
-    ['todo', 'Ablaufprotokoll erstellen', true],
-    ['todo', 'if/else, while und do-while übersetzen', true],
-    ['todo', 'eigene Programme schreiben (Summe, Fakultät, …)', true],
-    ['todo', 'Laufzeit im Einheitskostenmaß bestimmen', true],
-    ['todo', 'indirekte Adressierung wie ein Array benutzen', false],
-  ] },
-];
+const EXTRA = [];
