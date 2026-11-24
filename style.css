@@ -276,3 +276,27 @@ body.edit .picon>.fmove{top:0;right:-26px}
 .bc.pat{border-radius:5px;padding:12px 14px}
 main.page.pat{min-height:100vh}
 main.page.pat .props{border-bottom-color:rgba(55,53,47,.12)}
+
+.gbox{margin:6px 0}
+.gsvg{overflow-x:auto}
+svg.graph{width:100%;height:auto;display:block;touch-action:none}
+svg.graph .gst{fill:#fffdf8;stroke:#37352f;stroke-width:1.6}
+svg.graph .gfin{fill:none;stroke:#37352f;stroke-width:1.3}
+svg.graph .gsl{font:13px var(--font);text-anchor:middle;dominant-baseline:central;fill:#37352f}
+svg.graph .ge{fill:none;stroke:#55534e;stroke-width:1.4;marker-end:url(#gah)}
+svg.graph .glb{font:13px var(--font);fill:#37352f;text-anchor:middle;paint-order:stroke;stroke:#f3ead8;stroke-width:5px;stroke-linejoin:round}
+svg.graph .gstart{font:12px var(--font);fill:#787774}
+body.edit svg.graph .gq{cursor:move}
+svg.graph .gq.sel .gst{stroke:#2383e2;stroke-width:2.6}
+.gbar{display:flex;gap:6px;align-items:center;margin-top:4px}
+.gbar button{font:13px var(--font);color:var(--mut);background:none;border:1px solid var(--line);border-radius:4px;padding:2px 8px;cursor:pointer}
+.gbar button:hover{background:var(--hover)}
+.ghint{font-size:13px;color:#2383e2}
+.gstate{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:5px;border-radius:5px;margin-bottom:4px}
+.gstate .pin{width:70px}
+.gstate .gloop{width:auto}
+.gstate.sel,.gedge.sel{background:rgba(35,131,226,.09)}
+.gedge{padding:6px;border:1px solid var(--line);border-radius:5px;margin-bottom:6px;background:#fff}
+.gedgeh{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:4px}
+.gbend{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--light);margin-top:4px}
+.gbend input{flex:1}

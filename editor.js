@@ -39,6 +39,7 @@ const TYPES = [
   ['quote', 'Zitat', 'Zitat einfügen', '❝'],
   ['code', 'Code', 'Code oder Protokoll', '</>'],
   ['table', 'Tabelle', 'Einfache Tabelle', '▦'],
+  ['graph', 'Automat (Graph)', 'Zustände und Übergänge', '◎'],
   ['img', 'Bild', 'Hochladen und markieren', '🖼'],
   ['hr', 'Trennlinie', 'Teilt Abschnitte', '—'],
 ];
@@ -56,6 +57,13 @@ function nb(a) {
     case 'arrow': b.items = r[0] ? [...r[0]] : ['']; break;
     case 'table': b.rows = r[0] ? r[0].map(x => [...x]) : [['', ''], ['', '']]; break;
     case 'link': b.page = r[0]; break;
+    case 'graph': {
+      const sp = r[0] || { w: 420, h: 160, start: 'q0', states: [['q0', 90, 80]], edges: [] };
+      b.w = sp.w; b.h = sp.h; b.start = sp.start;
+      b.states = sp.states.map(([id, x, y, fin, loop]) => ({ id, x, y, final: !!fin, loop }));
+      b.edges = sp.edges.map(([from, to, label, bend]) => ({ from, to, label, bend }));
+      break;
+    }
   }
   return b;
 }
@@ -124,7 +132,7 @@ function freeHandle(el, o, px = 'dx', py = 'dy') {
   el.append(hd);
 }
 
-function go(id) { closePop(); SEL = null; CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
+function go(id) { closePop(); SEL = null; GSEL = null; ADDEDGE = null; CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
 function render() {
   const p = DOC.pages[CUR] || DOC.pages.home; CUR = p.id;
   document.body.classList.toggle('edit', EDIT);
@@ -323,6 +331,7 @@ function blockEl(b, list, num) {
       break;
     }
     case 'db': c.append(dbEl(b)); break;
+    case 'graph': c.append(graphEl(b)); break;
   }
   return w;
 }
@@ -414,6 +423,122 @@ function loadImage(file, cb) {
     im.src = fr.result;
   };
   fr.readAsDataURL(file);
+}
+
+let GSEL = null, ADDEDGE = null;
+function graphSvg(b) {
+  const R = 20, st = {};
+  b.states.forEach(q => st[q.id] = q);
+  const groups = new Map();
+  b.edges.forEach((e, i) => {
+    if (!st[e.from] || !st[e.to]) return;
+    const k = e.from + '>' + e.to;
+    if (!groups.has(k)) groups.set(k, { from: e.from, to: e.to, labs: [], bend: undefined });
+    const g = groups.get(k); g.labs.push(e.label); if (e.bend !== undefined && e.bend !== null && e.bend !== '') g.bend = +e.bend;
+  });
+  const f = n => n.toFixed(1);
+  const label = (x, y, lines) => {
+    const off = -(lines.length - 1) * 7.5;
+    return `<text class="glb" x="${f(x)}" y="${f(y + off + 4)}">` + lines.map((l, i) => `<tspan x="${f(x)}" dy="${i ? 15 : 0}">${esc(l)}</tspan>`).join('') + '</text>';
+  };
+  let s = `<svg class="graph" viewBox="0 0 ${b.w} ${b.h}" style="max-width:${b.w}px"><defs><marker id="gah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="#55534e"/></marker></defs>`;
+  for (const g of groups.values()) {
+    const a = st[g.from], c = st[g.to], lines = g.labs;
+    if (a === c) {
+      const th = ({ up: -Math.PI / 2, down: Math.PI / 2, left: Math.PI, right: 0 })[a.loop || 'up'];
+      const pt = (r, ang) => [a.x + r * Math.cos(ang), a.y + r * Math.sin(ang)];
+      const [x1, y1] = pt(R, th - 0.5), [x2, y2] = pt(R + 1, th + 0.5), [c1x, c1y] = pt(R + 40, th - 0.7), [c2x, c2y] = pt(R + 40, th + 0.7);
+      const apex = 0.25 * R * Math.cos(0.5) + 0.75 * (R + 40) * Math.cos(0.7);
+      const vertical = Math.abs(Math.sin(th)) > .5;
+      const maxLen = Math.max(...lines.map(l => String(l).length));
+      const [lx, ly] = pt(vertical ? apex + 10 + (lines.length - 1) * 7.5 : apex + 8 + maxLen * 3.8, th);
+      s += `<path class="ge" d="M${f(x1)},${f(y1)}C${f(c1x)},${f(c1y)} ${f(c2x)},${f(c2y)} ${f(x2)},${f(y2)}"/>` + label(lx, ly, lines);
+    } else {
+      const bend = g.bend !== undefined ? g.bend : (groups.has(g.to + '>' + g.from) ? -24 : 0);
+      const dx = c.x - a.x, dy = c.y - a.y, L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+      const cx = (a.x + c.x) / 2 + nx * 2 * bend, cy = (a.y + c.y) / 2 + ny * 2 * bend;
+      const d1 = Math.hypot(cx - a.x, cy - a.y) || 1, d2 = Math.hypot(cx - c.x, cy - c.y) || 1;
+      const sx = a.x + (cx - a.x) / d1 * R, sy = a.y + (cy - a.y) / d1 * R, ex = c.x + (cx - c.x) / d2 * (R + 1), ey = c.y + (cy - c.y) / d2 * (R + 1);
+      s += `<path class="ge" d="M${f(sx)},${f(sy)}Q${f(cx)},${f(cy)} ${f(ex)},${f(ey)}"/>`;
+      const sign = bend === 0 ? -1 : Math.sign(bend), off = bend + sign * (14 + (lines.length - 1) * 7.5);
+      s += label((a.x + c.x) / 2 + nx * off, (a.y + c.y) / 2 + ny * off, lines);
+    }
+  }
+  const S = st[b.start];
+  if (S) s += `<path class="ge" d="M${S.x - R - 34},${S.y}H${S.x - R - 1}"/><text class="gstart" x="${S.x - R - 36}" y="${S.y - 7}">Start</text>`;
+  b.states.forEach(q => {
+    const on = GSEL && GSEL.b === b.id && GSEL.q === q.id;
+    const from = ADDEDGE && ADDEDGE.b === b.id && ADDEDGE.from === q.id;
+    s += `<g class="gq${on || from ? ' sel' : ''}" data-q="${esc(q.id)}"><circle class="gst" cx="${q.x}" cy="${q.y}" r="${R}"/>`;
+    if (q.final) s += `<circle class="gfin" cx="${q.x}" cy="${q.y}" r="${R - 4}"/>`;
+    s += `<text class="gsl" x="${q.x}" y="${q.y}">${esc(q.id)}</text></g>`;
+  });
+  return s + '</svg>';
+}
+function graphEl(b) {
+  const box = h('div', { class: 'gbox' });
+  const holder = h('div', { class: 'gsvg' });
+  const draw = () => { holder.innerHTML = graphSvg(b); };
+  draw(); box.append(holder);
+  if (!EDIT) return box;
+  const hint = h('span', { class: 'ghint' }, ADDEDGE && ADDEDGE.b === b.id ? (ADDEDGE.from ? 'Jetzt den Zielzustand anklicken' : 'Startzustand des Pfeils anklicken') : '');
+  const nextId = () => { let i = 0; while (b.states.some(q => q.id === 'q' + i)) i++; return 'q' + i; };
+  box.append(h('div', { class: 'gbar' },
+    h('button', { onclick: () => { const n = b.states.length; const q = { id: nextId(), x: Math.min(b.w - 40, 60 + (n % 5) * 90), y: Math.min(b.h - 40, 60 + Math.floor(n / 5) * 90), final: false }; b.states.push(q); if (!b.start) b.start = q.id; GSEL = { b: b.id, q: q.id }; SEL = b.id; save(); render(); } }, '+ Zustand'),
+    h('button', { onclick: () => { ADDEDGE = { b: b.id, from: null }; SEL = b.id; render(); } }, '+ Übergang'),
+    hint));
+  const toSvg = (svg, ev) => { const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+  holder.addEventListener('pointerdown', ev => {
+    const gq = ev.target.closest('.gq'); if (!gq) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const svg = holder.querySelector('svg'), q = b.states.find(x => x.id === gq.dataset.q); if (!q) return;
+    const p0 = toSvg(svg, ev), ox = q.x, oy = q.y; let moved = false;
+    holder.setPointerCapture(ev.pointerId);
+    const mm = e2 => { const p = toSvg(holder.querySelector('svg'), e2); const nx = Math.round(ox + p.x - p0.x), ny = Math.round(oy + p.y - p0.y); if (Math.abs(nx - ox) + Math.abs(ny - oy) > 3) moved = true; if (moved) { q.x = Math.max(22, Math.min(b.w - 22, nx)); q.y = Math.max(22, Math.min(b.h - 22, ny)); draw(); } };
+    const up = () => {
+      holder.removeEventListener('pointermove', mm); holder.removeEventListener('pointerup', up);
+      if (moved) { save(); return; }
+      if (ADDEDGE && ADDEDGE.b === b.id) {
+        if (!ADDEDGE.from) { ADDEDGE.from = q.id; render(); return; }
+        b.edges.push({ from: ADDEDGE.from, to: q.id, label: 'a' }); ADDEDGE = null; GSEL = { b: b.id, e: b.edges.length - 1 }; SEL = b.id; PTAB = 'block'; save(); render();
+        const inp = document.querySelector('#panel .gedge.sel input'); if (inp) { inp.focus(); inp.select(); }
+        return;
+      }
+      GSEL = { b: b.id, q: q.id }; SEL = b.id; PTAB = 'block'; render();
+    };
+    holder.addEventListener('pointermove', mm); holder.addEventListener('pointerup', up);
+  });
+  return box;
+}
+function panelGraph(B, b) {
+  const rerender = () => { save(); renderPage(); };
+  B.append(rangeCtl('Breite', b.w, 200, 900, 'px', v => { b.w = v; rerender(); }));
+  B.append(rangeCtl('Höhe', b.h, 80, 600, 'px', v => { b.h = v; rerender(); }));
+  B.append(plabel('Zustände'));
+  b.states.forEach(q => {
+    const name = h('input', { class: 'pin', value: q.id, title: 'Name' });
+    name.onchange = () => {
+      const nv = name.value.trim(); if (!nv || b.states.some(x => x !== q && x.id === nv)) { name.value = q.id; return; }
+      b.edges.forEach(e => { if (e.from === q.id) e.from = nv; if (e.to === q.id) e.to = nv; });
+      if (b.start === q.id) b.start = nv; if (GSEL && GSEL.q === q.id) GSEL.q = nv; q.id = nv; re();
+    };
+    const loop = pselect([['up', 'oben'], ['right', 'rechts'], ['down', 'unten'], ['left', 'links']], q.loop || 'up', v => { q.loop = v; rerender(); });
+    loop.title = 'Schleife'; loop.classList.add('gloop');
+    B.append(h('div', { class: 'gstate' + (GSEL && GSEL.b === b.id && GSEL.q === q.id ? ' sel' : '') }, name,
+      pcheck('Start', b.start === q.id, v => { b.start = v ? q.id : ''; re(); }),
+      pcheck('Ende', q.final, v => { q.final = v; re(); }), loop,
+      pbtn('×', () => { b.states = b.states.filter(x => x !== q); b.edges = b.edges.filter(e => e.from !== q.id && e.to !== q.id); if (b.start === q.id) b.start = b.states[0] ? b.states[0].id : ''; re(); }, 'danger')));
+  });
+  B.append(plabel('Übergänge'));
+  if (!b.edges.length) B.append(h('p', { class: 'pmut' }, 'Noch keine Übergänge. „+ Übergang“ unter dem Graphen klicken.'));
+  b.edges.forEach((e, i) => {
+    const lab = h('input', { class: 'pin', value: e.label, placeholder: 'Beschriftung' });
+    lab.oninput = () => { e.label = lab.value; rerender(); };
+    const bend = h('input', { type: 'range', min: -90, max: 90, step: 2, value: e.bend ?? 0, title: 'Bogen' });
+    bend.oninput = () => { e.bend = +bend.value; rerender(); };
+    B.append(h('div', { class: 'gedge' + (GSEL && GSEL.b === b.id && GSEL.e === i ? ' sel' : '') },
+      h('div', { class: 'gedgeh' }, h('span', {}, e.from + ' → ' + e.to), pbtn('×', () => { b.edges.splice(i, 1); re(); }, 'danger')), lab, h('label', { class: 'gbend' }, 'Bogen', bend)));
+  });
 }
 
 let VIEW = null;
@@ -542,6 +667,7 @@ function panelBlock(B) {
       B.append(pc(pbtn('+ Pfeil (dann aufs Bild klicken)', () => { const bt = $(`[data-id="${b.id}"] .imgbar button`); if (bt) bt.click(); }), b.marks.length ? pbtn('Alle Pfeile löschen', () => { b.marks = []; re(); }, 'danger') : null));
     }
   }
+  if (b.t === 'graph') panelGraph(B, b);
   if (b.t === 'link') B.append(prow('Ziel', pselect(Object.values(DOC.pages).map(p => [p.id, (p.icon ? p.icon + ' ' : '') + (p.title || 'Unbenannt')]), b.page, v => { b.page = v; re(); })));
   if (b.t === 'db') {
     const ti = h('input', { class: 'pin', value: b.title === undefined ? 'Unterrichtstage' : b.title, oninput: () => { b.title = ti.value; save(); renderPage(); } });
