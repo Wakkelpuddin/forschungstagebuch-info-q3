@@ -115,8 +115,8 @@ function render() {
   cr.append(h('a', { class: 'crumb', href: '#', onclick: e => { e.preventDefault(); go('home'); } }, h('span', { class: 'ci' }, home.icon), home.title));
   if (p.id !== 'home') cr.append(h('span', { class: 'sep' }, '/'), h('span', { class: 'crumb cur' }, h('span', { class: 'ci' }, p.icon), p.title || 'Unbenannt'));
   $('#edited').textContent = 'Bearbeitet ' + (p.edited || '');
-  $('#editbtn').textContent = EDIT ? 'Fertig' : 'Bearbeiten';
-  $('#more').hidden = !EDIT;
+  if ($('#editbtn')) $('#editbtn').textContent = EDIT ? 'Fertig' : 'Bearbeiten';
+  if ($('#more')) $('#more').hidden = !EDIT;
 
   const main = $('#page'); main.innerHTML = '';
   if (p.cover) main.append(h('div', { class: 'cover' }));
@@ -516,13 +516,29 @@ function exportDoc() {
   const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })), download: 'data.json' });
   document.body.append(a); a.click(); a.remove();
 }
+const OWNER_HASH = '531824cd38caf9dd1a8bb8f85043f174da10cf140ec9d7110a255b14a2dddd23';
+const OWNER_FLAG = 'ftbq3-owner';
+async function sha256(s) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function checkOwner() {
+  const key = new URLSearchParams(location.search).get('key');
+  if (key) {
+    try { if (await sha256(key) === OWNER_HASH) localStorage.setItem(OWNER_FLAG, OWNER_HASH); } catch (e) { }
+    history.replaceState(null, '', location.pathname + location.hash);
+  }
+  try { return localStorage.getItem(OWNER_FLAG) === OWNER_HASH; } catch (e) { return false; }
+}
 async function start() {
+  const owner = await checkOwner();
   BASE = buildDoc();
   try { const r = await fetch('data.json', { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && d.pages && d.stamp) BASE = d; } } catch (e) { }
   DOC = BASE;
-  try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.base === BASE.stamp && s.pages) DOC = s; } catch (e) { }
+  if (owner) { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.base === BASE.stamp && s.pages) DOC = s; } catch (e) { } }
   DOC.base = BASE.stamp;
   CUR = location.hash.slice(1) || 'home';
+  if (!owner) { $('#editbtn').remove(); $('#more').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
   $('#editbtn').onclick = () => { EDIT = !EDIT; closePop(); render(); };
   $('#more').onclick = e => {
     e.stopPropagation(); closePop();
@@ -530,6 +546,7 @@ async function start() {
     POP.style.left = Math.max(8, $('#more').getBoundingClientRect().right - 230) + 'px';
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
     it('Als data.json exportieren', exportDoc);
+    it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
     it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; render(); } }, 'danger');
   };
   window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; closePop(); render(); window.scrollTo(0, 0); } });
