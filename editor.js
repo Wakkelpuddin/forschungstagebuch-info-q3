@@ -1192,7 +1192,18 @@ async function start() {
     POP.style.left = Math.max(8, $('#more').getBoundingClientRect().right - 230) + 'px';
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
     if (localStorage.getItem(TKEY)) it('Veröffentlichen', () => publish($('#editbtn')));
-    else it('Veröffentlichen einrichten', () => { const t = prompt('GitHub-Token (Contents: Read and write für das Repo):'); if (t && t.trim()) { localStorage.setItem(TKEY, t.trim()); } });
+    else it('Veröffentlichen einrichten', async () => {
+      const t = (prompt('GitHub-Token einfügen (nur für dieses Repo, Contents: Read and write):') || '').trim();
+      if (!t) return;
+      try {
+        const r = await fetch('https://api.github.com/repos/' + REPO, { headers: { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' } });
+        const j = r.ok ? await r.json() : null;
+        if (!j || !j.permissions || !j.permissions.push) { alert('Der Token funktioniert nicht oder hat kein Schreibrecht für das Repo.'); return; }
+        localStorage.setItem(TKEY, t);
+        if (confirm('Token gespeichert. Jetzt veröffentlichen?')) publish($('#editbtn'));
+      } catch (er) { alert('Token konnte nicht geprüft werden.'); }
+    });
+    if (localStorage.getItem(TKEY)) it('Token auf diesem Gerät löschen', () => { localStorage.removeItem(TKEY); });
     it('Sicherung herunterladen', () => download('forschungstagebuch-sicherung-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(DOC)));
     if (backups().length) it('Ältere Stände herunterladen (' + backups().length + ')', () => backups().forEach((k, i) => setTimeout(() => download('stand-' + (i + 1) + '.json', localStorage.getItem(k)), i * 400)));
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
