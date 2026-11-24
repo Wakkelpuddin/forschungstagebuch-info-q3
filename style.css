@@ -306,3 +306,15 @@ svg.graph .gq.sel .gst{stroke:#2383e2;stroke-width:2.6}
 .pb:disabled{opacity:.6;cursor:default}
 .tbtn.hist{font-size:17px;padding:2px 8px;line-height:1}
 .tbtn:disabled{opacity:.35;cursor:default;background:none}
+.rrbox{overflow-x:auto;padding:2px 0}
+svg.rr{display:block;max-width:none}
+svg.rr .rr-l{fill:none;stroke:#37352f;stroke-width:1.5}
+svg.rr .rr-a{marker-end:url(#rra)}
+svg.rr .rr-t{fill:#fffdf8;stroke:#37352f;stroke-width:1.4}
+svg.rr .rr-n{fill:#fff;stroke:#37352f;stroke-width:1.4}
+svg.rr .rr-tx{font:13px var(--mono);text-anchor:middle;fill:#37352f}
+svg.rr .rr-nx{font:italic 13px var(--font);text-anchor:middle;fill:#37352f}
+svg.rr .rr-name{font:600 13px var(--font);fill:#37352f}
+.rrerr{color:#d44c47;font-size:13px;padding:6px 0}
+.rrdef{font-family:var(--mono);font-size:12.5px;resize:vertical}
+.rrmsg{color:#d44c47;font-size:12px;min-height:1em;margin-top:2px}

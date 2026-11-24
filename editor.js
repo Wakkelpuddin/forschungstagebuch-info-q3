@@ -40,6 +40,7 @@ const TYPES = [
   ['code', 'Code', 'Code oder Protokoll', '</>'],
   ['table', 'Tabelle', 'Einfache Tabelle', '▦'],
   ['graph', 'Automat (Graph)', 'Zustände und Übergänge', '◎'],
+  ['rail', 'Syntaxdiagramm', 'Regel als Gleisplan', '⇄'],
   ['img', 'Bild', 'Hochladen und markieren', '🖼'],
   ['hr', 'Trennlinie', 'Teilt Abschnitte', '—'],
 ];
@@ -57,6 +58,7 @@ function nb(a) {
     case 'arrow': b.items = r[0] ? [...r[0]] : ['']; break;
     case 'table': b.rows = r[0] ? r[0].map(x => [...x]) : [['', ''], ['', '']]; break;
     case 'link': b.page = r[0]; break;
+    case 'rail': b.name = r[0] || 'Regel'; b.def = r[1] || '"a" { "b" }'; break;
     case 'graph': {
       const sp = r[0] || { w: 420, h: 160, start: 'q0', states: [['q0', 90, 80]], edges: [] };
       b.w = sp.w; b.h = sp.h; b.start = sp.start;
@@ -366,6 +368,7 @@ function blockEl(b, list, num) {
     }
     case 'db': c.append(dbEl(b)); break;
     case 'graph': c.append(graphEl(b)); break;
+    case 'rail': c.append(railEl(b)); break;
   }
   return w;
 }
@@ -575,6 +578,115 @@ function panelGraph(B, b) {
   });
 }
 
+function railParse(src) {
+  const toks = []; let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (/\s/.test(c)) { i++; continue; }
+    if ('|[]{}/()+'.includes(c)) { toks.push({ k: c }); i++; continue; }
+    if (c === '"' || c === '„' || c === '“') {
+      let j = i + 1, v = '';
+      while (j < src.length && src[j] !== '"' && src[j] !== '“' && src[j] !== '”') v += src[j++];
+      if (j >= src.length) throw new Error('Anführungszeichen nicht geschlossen');
+      toks.push({ k: 't', v }); i = j + 1; continue;
+    }
+    let v = '';
+    while (i < src.length && !/\s/.test(src[i]) && !'|[]{}/()+"„“'.includes(src[i])) v += src[i++];
+    toks.push({ k: 'n', v });
+  }
+  let p = 0;
+  const peek = () => toks[p], eat = k => { if (!toks[p] || toks[p].k !== k) throw new Error('„' + k + '“ fehlt'); return toks[p++]; };
+  const expr = () => { const alts = [seq()]; while (peek() && peek().k === '|') { p++; alts.push(seq()); } return alts.length > 1 ? { k: 'alt', c: alts } : alts[0]; };
+  const seq = () => { const items = []; while (peek() && !'|]}/)'.includes(peek().k)) items.push(item()); if (!items.length) throw new Error('leerer Teil'); return items.length > 1 ? { k: 'seq', c: items } : items[0]; };
+  const item = () => {
+    const t = toks[p++];
+    if (t.k === 't') return { k: 't', t: t.v };
+    if (t.k === 'n') return { k: 'n', t: t.v };
+    if (t.k === '(') { const e = expr(); eat(')'); return e; }
+    if (t.k === '[') { const e = expr(); eat(']'); return { k: 'opt', c: [e] }; }
+    if (t.k === '{') {
+      const e = expr(); let sep = null;
+      if (peek() && peek().k === '/') { p++; sep = expr(); }
+      eat('}');
+      const plus = peek() && peek().k === '+'; if (plus) p++;
+      const rep = { k: 'rep', c: [e], sep };
+      return sep || plus ? rep : { k: 'opt', c: [rep] };
+    }
+    throw new Error('unerwartetes Zeichen „' + t.k + '“');
+  };
+  if (!toks.length) throw new Error('Definition ist leer');
+  const r = expr(); if (p < toks.length) throw new Error('unerwartetes „' + (toks[p].v || toks[p].k) + '“');
+  return r;
+}
+function rrM(n) {
+  switch (n.k) {
+    case 't': case 'n': n.w = Math.max(30, Math.round(String(n.t).length * 8.2 + 24)); n.a = 13; n.d = 13; break;
+    case 'seq': n.c.forEach(rrM); n.w = n.c.reduce((s, c) => s + c.w, 0) + 20 * (n.c.length - 1); n.a = Math.max(...n.c.map(c => c.a)); n.d = Math.max(...n.c.map(c => c.d)); break;
+    case 'alt': { n.c.forEach(rrM); n.w = Math.max(...n.c.map(c => c.w)) + 48; n.a = n.c[0].a; let d = n.c[0].d; n.offs = [0]; for (let i = 1; i < n.c.length; i++) { d += 14 + n.c[i].a; n.offs.push(d); d += n.c[i].d; } n.d = d; break; }
+    case 'opt': { const x = rrM(n.c[0]); n.w = x.w + 48; n.a = x.a + 14; n.d = x.d; break; }
+    case 'rep': { const x = rrM(n.c[0]); let sw = 0, sa = 0, sd = 0; if (n.sep) { rrM(n.sep); sw = n.sep.w; sa = n.sep.a; sd = n.sep.d; } n.w = Math.max(x.w, sw) + 48; n.a = x.a; n.ly = x.d + 14 + sa; n.d = n.ly + sd; break; }
+  }
+  return n;
+}
+const rp = (d, cls = 'rr-l') => `<path d="${d}" class="${cls}"/>`;
+function rrD(n, x, y) {
+  let s = '';
+  switch (n.k) {
+    case 't': return `<rect x="${x}" y="${y - 13}" width="${n.w}" height="26" rx="13" class="rr-t"/><text x="${x + n.w / 2}" y="${y + 5}" class="rr-tx">${esc(n.t)}</text>`;
+    case 'n': return `<rect x="${x}" y="${y - 13}" width="${n.w}" height="26" class="rr-n"/><text x="${x + n.w / 2}" y="${y + 5}" class="rr-nx">${esc(n.t)}</text>`;
+    case 'seq': { let cx = x; n.c.forEach((c, i) => { if (i) { s += rp(`M${cx},${y}H${cx + 20}`, 'rr-l rr-a'); cx += 20; } s += rrD(c, cx, y); cx += c.w; }); return s; }
+    case 'alt': {
+      const R = x + n.w;
+      n.c.forEach((c, i) => {
+        const yi = y + n.offs[i], cx = x + 24, ex = cx + c.w;
+        if (i === 0) s += rp(`M${x},${y}H${cx}`) + rrD(c, cx, y) + rp(`M${ex},${y}H${R}`);
+        else s += rp(`M${x},${y}Q${x + 12},${y} ${x + 12},${y + 12}V${yi - 12}Q${x + 12},${yi} ${cx},${yi}`) + rrD(c, cx, yi) + rp(`M${ex},${yi}H${R - 24}Q${R - 12},${yi} ${R - 12},${yi - 12}V${y + 12}Q${R - 12},${y} ${R},${y}`);
+      });
+      return s;
+    }
+    case 'opt': {
+      const c = n.c[0], R = x + n.w, yt = y - n.a;
+      return rp(`M${x},${y}H${x + 24}`) + rrD(c, x + 24, y) + rp(`M${x + 24 + c.w},${y}H${R}`)
+        + rp(`M${x},${y}Q${x + 12},${y} ${x + 12},${y - 12}V${yt + 12}Q${x + 12},${yt} ${x + 24},${yt}H${R - 24}Q${R - 12},${yt} ${R - 12},${yt + 12}V${y - 12}Q${R - 12},${y} ${R},${y}`);
+    }
+    case 'rep': {
+      const c = n.c[0], R = x + n.w, yl = y + n.ly, cx = x + (n.w - c.w) / 2;
+      s += rp(`M${x},${y}H${cx}`) + rrD(c, cx, y) + rp(`M${cx + c.w},${y}H${R}`);
+      const right = `M${R - 24},${y}Q${R - 12},${y} ${R - 12},${y + 12}V${yl - 12}Q${R - 12},${yl} ${R - 24},${yl}`;
+      const left = `H${x + 24}Q${x + 12},${yl} ${x + 12},${yl - 12}V${y + 12}Q${x + 12},${y} ${x + 24},${y}`;
+      if (n.sep) { const sx = x + (n.w - n.sep.w) / 2; s += rp(`${right}H${sx + n.sep.w}`, 'rr-l rr-a') + rrD(n.sep, sx, yl) + rp(`M${sx},${yl}${left}`); }
+      else { const mx = x + n.w / 2; s += rp(`${right}H${mx}`, 'rr-l rr-a') + rp(`M${mx},${yl}${left}`); }
+      return s;
+    }
+  }
+  return s;
+}
+function railEl(b) {
+  const box = h('div', { class: 'rrbox' });
+  let node;
+  try { node = railParse(b.def || ''); } catch (er) { box.append(h('div', { class: 'rrerr' }, 'Syntaxdiagramm: ' + er.message)); return box; }
+  rrM(node);
+  const W = node.w + 40, top = 32 + node.a, H = top + node.d + 12;
+  box.innerHTML = `<svg class="rr" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><defs><marker id="rra" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0L8,4L0,8z" fill="#37352f"/></marker></defs>`
+    + `<text x="4" y="15" class="rr-name">${esc(b.name || '')}</text>`
+    + rp(`M8,${top - 9}V${top + 9}M8,${top}H20`) + rrD(node, 20, top) + rp(`M${20 + node.w},${top}H${W - 8}M${W - 8},${top - 9}V${top + 9}`) + '</svg>';
+  return box;
+}
+function panelRail(B, b) {
+  const nm = h('input', { class: 'pin', value: b.name || '' });
+  nm.oninput = () => { b.name = nm.value; save(); renderPage(); };
+  B.append(prow('Name', nm));
+  const ta = h('textarea', { class: 'pin rrdef', rows: 4, spellcheck: 'false' }); ta.value = b.def || '';
+  const err = h('div', { class: 'rrmsg' });
+  const check = () => { try { railParse(ta.value); err.textContent = ''; } catch (er) { err.textContent = er.message; } };
+  ta.oninput = () => { b.def = ta.value; check(); save(); renderPage(); };
+  check();
+  B.append(prow('Regel', ta, err));
+  const ins = txt => { const s0 = ta.selectionStart, s1 = ta.selectionEnd; ta.value = ta.value.slice(0, s0) + txt + ta.value.slice(s1); ta.focus(); ta.selectionStart = ta.selectionEnd = s0 + txt.length; ta.oninput(); };
+  B.append(pc(pbtn('"Terminal"', () => ins(' "a" ')), pbtn('Nichtterminal', () => ins(' Name ')), pbtn('|', () => ins(' | ')), pbtn('[ Option ]', () => ins(' [ "a" ] ')), pbtn('{ Wiederholung }', () => ins(' { "a" } ')), pbtn('{ mind. 1 }+', () => ins(' { "a" }+ ')), pbtn('{ A / Trenner }', () => ins(' { A / "," } '))));
+  B.append(h('p', { class: 'pmut' }, '"text" = Terminal, Wort = Nichtterminal, Leerzeichen = hintereinander, | = oder, [ ] = optional, { } = beliebig oft, { }+ = mindestens einmal, { A / "s" } = A mehrmals, dazwischen s auf dem Rückweg.'));
+}
+
 let VIEW = null;
 const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['thema', '▤', 'Nach Thema']];
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
@@ -702,6 +814,7 @@ function panelBlock(B) {
     }
   }
   if (b.t === 'graph') panelGraph(B, b);
+  if (b.t === 'rail') panelRail(B, b);
   if (b.t === 'link') B.append(prow('Ziel', pselect(Object.values(DOC.pages).map(p => [p.id, (p.icon ? p.icon + ' ' : '') + (p.title || 'Unbenannt')]), b.page, v => { b.page = v; re(); })));
   if (b.t === 'db') {
     const ti = h('input', { class: 'pin', value: b.title === undefined ? 'Unterrichtstage' : b.title, oninput: () => { b.title = ti.value; save(); renderPage(); } });
