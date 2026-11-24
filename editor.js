@@ -141,6 +141,7 @@ function render() {
 
   const main = $('#page'); main.innerHTML = '';
   main.className = 'page f-' + (p.font || 'sans') + (p.small ? ' small' : '') + (p.full ? ' full' : '');
+  applyPat(main, p.bgPat, p.bgColor);
   if (p.cover) main.append(coverEl(p));
   const inner = h('div', { class: 'inner' }); main.append(inner);
   const head = h('div', { class: 'phead' + (p.cover ? ' hascover' : '') + (p.icon ? '' : ' noicon') });
@@ -172,7 +173,20 @@ function render() {
 }
 let NOPANEL = false;
 function renderPage() { NOPANEL = true; try { render(); } finally { NOPANEL = false; } }
-const COVERS = { sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
+const COVERS = { weiss: ['#ffffff', '#e3e2de'], sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
+const PATTERNS = [['', 'Keins'], ['dots', 'Punkte'], ['lines', 'Linien'], ['grid', 'Kariert'], ['plain', 'Einfarbig']];
+function applyPat(el, pat, color) {
+  el.classList.remove('pat', 'pt-dots', 'pt-lines', 'pt-grid', 'pt-plain');
+  el.style.removeProperty('--cbg'); el.style.removeProperty('--cfg');
+  if (!pat) return;
+  const [bg, fg] = COVERS[color || 'sand'] || COVERS.sand;
+  el.classList.add('pat', 'pt-' + pat); el.style.setProperty('--cbg', bg); el.style.setProperty('--cfg', fg);
+}
+function patCtl(B, o, kp, kc, label) {
+  B.append(plabel(label));
+  B.append(h('div', { class: 'prow' }, pseg(PATTERNS, o[kp] || '', v => { o[kp] = v; re(); })));
+  if (o[kp]) B.append(h('div', { class: 'psw', style: 'margin-bottom:8px' }, ...Object.entries(COVERS).map(([k, [bg]]) => h('button', { class: 'sw2' + ((o[kc] || 'sand') === k ? ' on' : ''), style: 'background:' + bg, title: k, onclick: () => { o[kc] = k; re(); } }))));
+}
 function coverEl(p) {
   const [bg, fg] = COVERS[p.coverColor || 'sand'] || COVERS.sand;
   const c = h('div', { class: 'cover cv-' + (p.coverStyle || 'dots') }); if (p.coverH) c.style.height = p.coverH + 'px';
@@ -233,6 +247,7 @@ function blockEl(b, list, num) {
   }
   const c = h('div', { class: 'bc' }); w.append(c);
   if (b.wpct) w.style.width = b.wpct + '%';
+  applyPat(c, b.pat, b.patColor);
   applyOff(w, b); freeHandle(w, b);
   switch (b.t) {
     case 'p': c.append(textEl('div', b, 'Tippe „/“ für Befehle')); break;
@@ -548,6 +563,7 @@ function panelBlock(B) {
     DBCOLS.forEach(([k, n]) => B.append(pc(pcheck(n, cols.includes(k), v => { b.cols = DBCOLS.map(c => c[0]).filter(c => c === k ? v : cols.includes(c)); re(); }))));
     B.append(pc(pbtn('+ Neuer Termin', newPage)));
   }
+  if (b.t !== 'db') patCtl(B, b, 'pat', 'patColor', 'Hintergrundmuster');
   const blkEl = () => document.querySelector('[data-id="' + b.id + '"]');
   B.append(plabel('Position und Größe'));
   B.append(posCtl(b, 'dx', 'dy', blkEl));
@@ -591,6 +607,7 @@ function panelPage(B) {
     B.append(prow('Farbe', h('div', { class: 'psw' }, ...Object.entries(COVERS).map(([k, [bg]]) => h('button', { class: 'sw2' + ((p.coverColor || 'sand') === k ? ' on' : ''), style: 'background:' + bg, title: k, onclick: () => { p.coverColor = k; re(); } })))));
     B.append(prow('Eigenes Bild', pbtn('Hochladen', () => { const fi = h('input', { type: 'file', accept: 'image/*' }); fi.onchange = () => fi.files[0] && loadImage(fi.files[0], src => { p.coverImg = src; re(); }); fi.click(); }), p.coverImg ? pbtn('Entfernen', () => { delete p.coverImg; re(); }) : null));
   }
+  patCtl(B, p, 'bgPat', 'bgColor', 'Seitenhintergrund');
   B.append(plabel('Text'));
   B.append(prow('Schrift', pseg([['sans', 'Standard'], ['serif', 'Serif'], ['mono', 'Mono']], p.font || 'sans', v => { p.font = v; re(); })));
   B.append(pc(pcheck('Kleine Schrift', p.small, v => { p.small = v; re(); })));

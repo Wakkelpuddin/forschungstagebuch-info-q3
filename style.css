@@ -278,3 +278,12 @@ body.edit .picon>.fmove{top:0;right:-26px}
 .rval{color:var(--fg);font-weight:400}
 .prow input[type=range]{width:100%}
 @media (max-width:820px){body.edit .fmove{right:-4px;top:-18px}}
+
+/* Hintergrundmuster für Blöcke und Seite */
+.pat{background-color:var(--cbg)!important}
+.pat.pt-dots{background-image:radial-gradient(var(--cfg) 1.2px,transparent 1.2px);background-size:22px 22px}
+.pat.pt-lines{background-image:repeating-linear-gradient(135deg,var(--cfg) 0 2px,transparent 2px 18px)}
+.pat.pt-grid{background-image:linear-gradient(var(--cfg) 1px,transparent 1px),linear-gradient(90deg,var(--cfg) 1px,transparent 1px);background-size:24px 24px}
+.bc.pat{border-radius:5px;padding:12px 14px}
+main.page.pat{min-height:100vh}
+main.page.pat .props{border-bottom-color:rgba(55,53,47,.12)}
