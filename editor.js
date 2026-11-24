@@ -448,7 +448,7 @@ function dbEl(b) {
     const groups = {}; rows.forEach(p => (groups[p.props.thema || 'Ohne Thema'] = groups[p.props.thema || 'Ohne Thema'] || []).push(p));
     Object.keys(THEMEN).concat('Ohne Thema').filter(k => groups[k]).forEach(k => board.append(h('div', { class: 'col' },
       h('div', { class: 'colh' }, chip(k, THEMEN) || k, h('span', { class: 'cnt' }, groups[k].length)),
-      ...groups[k].map(p => h('div', { class: 'card', onclick: () => go(p.id) }, h('div', { class: 'ct' }, h('span', { class: 'ci' }, p.icon), p.title), h('div', { class: 'cm' }, kurzDatum(p.props.datum), ' ', chip(p.props.gefuehl, GEFUEHL)))))));
+      ...groups[k].map(p => h('div', { class: 'card', onclick: () => go(p.id) }, h('div', { class: 'ct' }, h('span', { class: 'ci' }, p.icon), p.title), h('div', { class: 'cm' }, kurzDatum(p.props.datum)))))));
     wrap.append(board);
   } else {
     const tl = h('div', { class: 'tl' }); let mon = '';
