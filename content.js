@@ -1,5 +1,5 @@
 'use strict';
-const CONTENT_VERSION = 10;
+const CONTENT_VERSION = 12;
 
 const START = {
   id: 'home', title: 'Forschungstagebuch Informatik Q3', icon: '📓', cover: true, edited: '15.11.2026 14:22',
@@ -38,7 +38,7 @@ const EINTRAEGE = [
 
 { id: 'z-ea', title: 'Themenzettel: Endliche Automaten', icon: '', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '27.08.2026 20:10',
   blocks: [
-    ['p', 'Hier habe ich alles Wichtige zu endlichen Automaten (Akzeptoren) gesammelt. Mit den Aufgaben unten kann man testen, ob man es verstanden hat. Die Lösungen sind eingeklappt.'],
+    ['p', 'Informationen zu endlichen Automaten (Akzeptoren), zusammengefasst aus dem Lernpaket und dem Informationsblatt.'],
     ['h3', 'Was ist ein endlicher Automat?'],
     ['ul', 'ein Modell, das ein Wort Zeichen für Zeichen liest'],
     ['ul', 'hat <b>endlich viele Zustände</b> und wechselt bei jedem Zeichen in einen Zustand'],
@@ -50,40 +50,13 @@ const EINTRAEGE = [
     ['h3', 'Drei Darstellungen für denselben Automaten'],
     ['p', 'Beispiel: alle Wörter über {a, b}, die mit a anfangen.'],
     ['code', 'Graph:         →(q0) --a--> ((q1)) --a,b--> ((q1))\n                 \\--b--> (F) --a,b--> (F)\n\nTabelle:       δ  | q0 | q1 | F\n               a  | q1 | q1 | F\n               b  | F  | q1 | F\n\nMengen:        K = {q0, q1, F}, Σ = {a, b}, s = q0, F_End = {q1}\n               δ = {⟨q0,a,q1⟩, ⟨q0,b,F⟩, ⟨q1,a,q1⟩, ⟨q1,b,q1⟩, ⟨F,a,F⟩, ⟨F,b,F⟩}'],
-    ['arrow', ['alle drei Darstellungen sagen genau das Gleiche', 'in der Klausur muss man zwischen ihnen übersetzen können']],
+    ['arrow', ['alle drei Darstellungen beschreiben denselben Automaten']],
     ['h3', 'Konfigurationsfolge'],
     ['p', 'Eine Konfiguration ist ⟨Zustand, Restwort⟩. Mit ⊢ schreibt man jeden Schritt auf. Beispiel mit dem Automaten von oben und dem Wort „aba“:'],
     ['code', '⟨q0, aba⟩ ⊢ ⟨q1, ba⟩ ⊢ ⟨q1, a⟩ ⊢ ⟨q1, ε⟩'],
-    ['arrow', ['ε = leeres Wort → alles gelesen', 'q1 ist Endzustand → akzeptiert', 'wichtig für den Punkt: immer bis ε aufschreiben und dann den Schluss hinschreiben']],
-    ['h3', 'So gehe ich vor, wenn ich einen Automaten bauen soll'],
-    ['ol', 'Alphabet klären: Welche Zeichen gibt es überhaupt?'],
-    ['ol', '<b>Was muss sich der Automat merken?</b> Jede Möglichkeit wird ein Zustand.'],
-    ['ol', 'Startzustand und Endzustände festlegen'],
-    ['ol', 'Übergänge eintragen, für jeden Zustand jedes Zeichen'],
-    ['ol', 'alles, was verboten ist, geht in einen Fehlerzustand (darf man weglassen, wenn man es dazuschreibt)'],
-    ['ol', 'testen: mindestens zwei Wörter, die passen, und zwei, die nicht passen'],
-    ['h3', 'Typische Muster'],
-    ['table', [['Muster', 'Idee', 'Beispiel'], ['Zählen', 'Zustände für 1, 2, 3 … Zeichen', 'Wort mindestens 3 Zeichen lang'], ['Merken', 'Zustand speichert das letzte (oder die letzten) Zeichen', 'kein „bb“, vorletzte Ziffer 0'], ['Verzweigen', 'je nach erstem Zeichen in einen anderen Teil', 'Lachautomat ha/hi/ho'], ['Fehlerzustand', 'alles Verbotene landet dort und kommt nie wieder raus', 'Klassennamen']]],
+    ['arrow', ['ε = leeres Wort → alles gelesen', 'q1 ist Endzustand → akzeptiert']],
     ['h3', 'Grenzen'],
     ['p', 'Ein endlicher Automat kann nicht beliebig weit zählen. Sprachen wie aⁿbⁿ (gleich viele a wie b), Palindrome oder „gleich viele 0 und 1“ gehen deshalb nicht. Er müsste sich eine Zahl merken, die beliebig groß werden kann, hat aber nur endlich viele Zustände.'],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Akzeptiert der Lachautomat (ha!, haha!, …) das Wort „hahaha“?', [
-      ['p', '<b>Lösung:</b> Nein. Das Wort wird komplett gelesen, aber am Ende fehlt das „!“. Der Automat steht dann in Zustand 3 und der ist kein Endzustand.'],
-    ]],
-    ['toggle', '2) Baue einen DEA über {0, 1}, der alle Wörter mit einer geraden Anzahl an Einsen akzeptiert.', [
-      ['p', '<b>Lösung:</b> Der Automat muss sich nur merken, ob die Anzahl der Einsen bis jetzt gerade oder ungerade ist. Also zwei Zustände:'],
-      ['code', '→((g)) --1--> (u)      g = gerade (Start und Endzustand)\n  (u)  --1--> ((g))    u = ungerade\nbei 0 bleibt man jeweils im gleichen Zustand'],
-      ['p', 'Test: 0110 → g, g, u, g, g → akzeptiert. 10 → u, u → nicht akzeptiert.'],
-    ]],
-    ['toggle', '3) Wann akzeptiert ein Automat das leere Wort ε?', [
-      ['p', '<b>Lösung:</b> Genau dann, wenn der Startzustand auch Endzustand ist. Bei ε wird nichts gelesen, man bleibt im Startzustand.'],
-    ]],
-    ['toggle', '4) Wie viele Zustände braucht ein Automat für „das Wort endet mit 01“ mindestens?', [
-      ['p', '<b>Lösung:</b> Drei. Er muss sich merken: „noch nichts Passendes“, „gerade eine 0 gelesen“ und „gerade 01 gelesen“ (Endzustand). Nach einer 0 in „01“ geht es zurück zu „0 gelesen“, nach einer 1 zurück zum Anfang.'],
-    ]],
-    ['toggle', '5) Kann ein endlicher Automat prüfen, ob in einem Wort gleich viele a und b vorkommen?', [
-      ['p', '<b>Lösung:</b> Nein. Er müsste den Unterschied zwischen a und b mitzählen. Der kann beliebig groß werden, ein endlicher Automat hat aber nur endlich viele Zustände.'],
-    ]],
   ] },
 
 { id: 'e0819', title: 'Lachautomat und erste Automaten', icon: '', datum: '2026-08-19', thema: 'Endliche Automaten', werkzeug: 'FLACI, AutoEdit', gefuehl: 'gut', art: 'Unterricht', edited: '20.08.2026 17:52',
@@ -175,32 +148,14 @@ const EINTRAEGE = [
     ['p', 'Ein regulärer Ausdruck beschreibt eine Sprache als <b>Muster</b>. Er besteht aus normalen Zeichen und Metazeichen. Endliche Automaten und reguläre Ausdrücke können genau die gleichen Sprachen beschreiben (die regulären Sprachen).'],
     ['h3', 'Metazeichen'],
     ['table', [['Zeichen', 'Bedeutung', 'Beispiel', 'passt auf'], ['x|y', 'x oder y', 'de|com', 'de, com'], ['[abc]', 'ein Zeichen aus der Klasse', '[0-9]', 'eine Ziffer'], ['[^abc]', 'ein Zeichen, das nicht in der Klasse ist', '[^0-9]', 'keine Ziffer'], ['(…)', 'Gruppe', '(ab)+', 'ab, abab'], ['?', '0- oder 1-mal', 'colou?r', 'color, colour'], ['*', 'beliebig oft, auch 0-mal', 'ba*', 'b, ba, baa'], ['+', 'mindestens 1-mal', 'ba+', 'ba, baa'], ['{n}', 'genau n-mal', '[0-9]{5}', 'PLZ'], ['{n,m}', 'n- bis m-mal', 'a{2,3}', 'aa, aaa'], ['.', 'irgendein Zeichen', 'h.t', 'hut, hat'], ['\\', 'hebt die Sonderbedeutung auf', '\\.', 'ein echter Punkt']]],
-    ['h3', 'So lese ich einen Ausdruck'],
-    ['p', 'Ich zerlege ihn von links nach rechts in Blöcke und schreibe zu jedem Block, was er macht. Beispiel Autokennzeichen:'],
+    ['h3', 'Beispiele aus dem Lernpaket'],
+    ['p', '(a|b)(ab)+b? : Wörter aus a und b, die mit a oder b beginnen, danach ein oder mehrere ab-Paare und am Schluss optional ein b.'],
+    ['p', 'Autokennzeichen, in Blöcke zerlegt:'],
     ['code', '[A-Z]{1,3} - [A-Z]{1,2} [1-9] [0-9]{0,3}\n    │       │     │      │      │\n    │       │     │      │      └ bis zu 3 weitere Ziffern\n    │       │     │      └ erste Ziffer ohne 0\n    │       │     └ 1–2 Buchstaben\n    │       └ Bindestrich\n    └ Ortskürzel, 1–3 Buchstaben'],
     ['arrow', ['Leerzeichen habe ich hier nur zum Lesen eingefügt, im echten Ausdruck stehen sie nicht']],
     ['h3', 'Vom Ausdruck zum Automaten'],
     ['table', [['im Ausdruck', 'im Automaten'], ['ab (hintereinander)', 'zwei Übergänge nacheinander'], ['a|b', 'zwei Pfeile aus demselben Zustand'], ['a*', 'Schleife am Zustand'], ['a+', 'einmal a, dann Schleife mit a'], ['a?', 'Pfeil mit a oder direkt weiter (Zustand ist schon Endzustand)']]],
     ['p', 'Beispiel: Se+x → s --S--> q0 --e--> q1 (Schleife e) --x--> q2 (Endzustand).'],
-    ['h3', 'Typische Fehler'],
-    ['ul', 'Punkt nicht escapt: <code>hbs.de</code> passt auch auf „hbsXde“ → richtig ist <code>hbs\\.de</code>'],
-    ['ul', 'Quantor bezieht sich nur auf das Zeichen davor: <code>ab+</code> = abbb, aber <code>(ab)+</code> = ababab'],
-    ['ul', '<code>[a-z]</code> enthält keine Umlaute'],
-    ['ul', 'ein Muster prüft nur die Form: <code>[0-9]{5}</code> passt auch auf 00000'],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Welche Wörter passen zu (a|b)(ab)+b? : ab, aab, babb, aabab', [
-      ['p', '<b>Lösung:</b> aab (a, dann ab), babb (b, ab, b) und aabab (a, abab). ab passt nicht, weil nach dem ersten Zeichen mindestens einmal „ab“ kommen muss.'],
-    ]],
-    ['toggle', '2) Schreibe einen Ausdruck für Uhrzeiten wie 07:45 oder 23:59 (24-Stunden).', [
-      ['p', '<b>Lösung:</b> <code>([01][0-9]|2[0-3]):[0-5][0-9]</code>'],
-      ['arrow', ['Stunden: 00–19 oder 20–23', 'Minuten: erste Ziffer 0–5']],
-    ]],
-    ['toggle', '3) Was ist der Unterschied zwischen [abc]+ und (abc)+ ?', [
-      ['p', '<b>Lösung:</b> [abc]+ sind beliebige Folgen aus a, b, c (z. B. cab, aaa). (abc)+ ist nur abc, abcabc, …'],
-    ]],
-    ['toggle', '4) Wie sieht der Automat zu 0(0|1)*1 aus?', [
-      ['p', '<b>Lösung:</b> q0 --0--> q1; q1 --0--> q1; q1 --1--> q2 (Endzustand); q2 --1--> q2; q2 --0--> q1. Also: beginnt mit 0, endet mit 1.'],
-    ]],
   ] },
 
 { id: 'e0902', title: 'Reguläre Ausdrücke', icon: '', datum: '2026-09-02', thema: 'Reguläre Ausdrücke', werkzeug: 'regex101, FLACI', gefuehl: 'gut', art: 'Unterricht', edited: '02.09.2026 16:20',
@@ -248,37 +203,17 @@ const EINTRAEGE = [
     ['h3', 'Aufbau: G = (N, T, P, S)'],
     ['table', [['Teil', 'Bedeutung', 'Merkhilfe'], ['N', 'Nichtterminale (Variablen)', 'Großbuchstaben, werden ersetzt'], ['T', 'Terminale', 'die echten Zeichen im Wort'], ['P', 'Produktionen', 'Regeln „links wird zu rechts“'], ['S', 'Startsymbol', 'hier geht es los']]],
     ['h3', 'Ableitung und Ableitungsbaum'],
-    ['p', 'Beispiel: S → aSb | ab'],
-    ['code', 'Ableitung:   S → aSb → aaSbb → aaabbb\n\nBaum:            S\n               / | \\\n              a  S  b\n               / | \\\n              a  S  b\n                / \\\n               a   b'],
+    ['p', 'Beispiel aus dem Lernpaket: T = {a, b, n, s, o, w}, N = {S, U}, P = { S → aU, U → nUs | sUn | oUw | wUo | b }'],
+    ['code', 'Ableitung:   S → aU → anUs → anoUws → anobws\n\nBaum:         S\n             / \\\n            a   U\n              / | \\\n             n  U  s\n              / | \\\n             o  U  w\n                |\n                b'],
     ['arrow', ['Wurzel = Startsymbol', 'innere Knoten = Nichtterminale', 'Blätter von links nach rechts = das Wort']],
-    ['p', 'Diese Grammatik erzeugt aⁿbⁿ (n ≥ 1). Dafür gibt es keinen endlichen Automaten.'],
     ['h3', 'Regulär oder kontextfrei?'],
     ['table', [['Art', 'erlaubte Regeln', 'Beispiel'], ['rechtsregulär', 'A → aB, A → a, A → ε', 'S → 0A, A → 1S | 1'], ['linksregulär', 'A → Ba, A → a, A → ε', 'S → A0, A → S1 | 1'], ['kontextfrei', 'links genau ein Nichtterminal, rechts beliebig', 'S → aSb | ab']]],
-    ['arrow', ['jede reguläre Grammatik ist auch kontextfrei, aber nicht umgekehrt', 'Begründung immer an einer konkreten Regel zeigen']],
+    ['arrow', ['jede reguläre Grammatik ist auch kontextfrei, aber nicht umgekehrt', 'U → nUs ist nicht regulär, weil das Nichtterminal zwischen zwei Terminalen steht']],
     ['h3', 'Reguläre Grammatik → Automat'],
     ['ul', 'jedes Nichtterminal wird ein Zustand, S ist der Startzustand'],
     ['ul', 'A → aB wird zum Pfeil A --a--> B'],
     ['ul', 'A → a wird zum Pfeil A --a--> (neuer Endzustand)'],
     ['ul', 'A → ε heißt: A ist Endzustand'],
-    ['h3', 'So baue ich eine Grammatik'],
-    ['ol', 'ein paar Wörter der Sprache aufschreiben'],
-    ['ol', 'überlegen, ob von links nach rechts gebaut werden kann (regulär) oder ob beide Seiten gleichzeitig wachsen müssen (kontextfrei)'],
-    ['ol', 'für jeden „Abschnitt“ des Wortes ein Nichtterminal'],
-    ['ol', 'mit einer Ableitung prüfen, und auch prüfen, dass falsche Wörter nicht ableitbar sind'],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Ist S → aS | bS | a regulär? Welche Sprache erzeugt sie?', [
-      ['p', '<b>Lösung:</b> Ja, rechtsregulär. Sie erzeugt alle Wörter aus a und b, die mit a enden.'],
-    ]],
-    ['toggle', '2) Gib eine Grammatik für Klammerausdrücke wie (), (()), ()() an.', [
-      ['code', 'S → (S) | SS | ()'],
-      ['p', '<b>Lösung:</b> Die Grammatik ist kontextfrei, nicht regulär, weil bei (S) das Nichtterminal in der Mitte steht.'],
-    ]],
-    ['toggle', '3) Leite mit S → aSb | ab das Wort aabb ab und zeichne den Baum.', [
-      ['code', 'S → aSb → aabb\n\n     S\n   / | \\\n  a  S  b\n    / \\\n   a   b'],
-    ]],
-    ['toggle', '4) Übersetze S → 0A | 1S, A → 1 | 0A in einen Automaten.', [
-      ['p', '<b>Lösung:</b> S --0--> A, S --1--> S, A --0--> A, A --1--> E (Endzustand). Die Sprache: erst beliebig viele 1, dann mindestens eine 0, am Ende genau eine 1 (z. B. 01, 1001, 0001).'],
-    ]],
   ] },
 
 { id: 'e0909', title: 'Grammatiken (Arbeitsauftrag)', icon: '', datum: '2026-09-09', thema: 'Grammatiken', werkzeug: 'Heft', gefuehl: 'mittel', art: 'Arbeitsauftrag', edited: '10.09.2026 18:31',
@@ -330,31 +265,12 @@ const EINTRAEGE = [
 
 { id: 'z-mealy', title: 'Themenzettel: Automaten mit Ausgabe', icon: '', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: '', gefuehl: '', art: 'Themenzettel', edited: '25.09.2026 18:05',
   blocks: [
+    ['p', 'Informationen aus dem Lernpaket „Transduktoren & Mealy-Automaten“.'],
     ['h3', 'Akzeptor oder Transduktor?'],
     ['table', [['', 'Akzeptor', 'Transduktor (Mealy)'], ['Ergebnis', 'am Ende ja oder nein', 'bei jedem Schritt eine Ausgabe'], ['Endzustände', 'ja, wichtig', 'nicht nötig'], ['Beschriftung', 'a', 'a / x (Eingabe / Ausgabe)'], ['Beispiel', 'Klassennamen prüfen', 'Getränkeautomat, Wechselgeld']]],
     ['h3', 'Mealy-Automat als 6-Tupel'],
     ['code', 'M = (X, Y, Z, δ, λ, z0)\n\nX  = Eingabealphabet\nY  = Ausgabealphabet\nZ  = Zustände\nδ  = Übergangsfunktion (wohin)\nλ  = Ausgabefunktion (was wird ausgegeben)\nz0 = Startzustand'],
-    ['arrow', ['beim Mealy-Automaten hängt die Ausgabe vom Zustand UND von der Eingabe ab', 'pro Eingabe kommt genau eine Ausgabe raus (auch „–“ für nichts)']],
-    ['h3', 'So modelliere ich einen Automaten mit Ausgabe'],
-    ['ol', 'Was muss sich das Gerät merken? (z. B. eingeworfener Betrag) → Zustände'],
-    ['ol', 'Eingaben auflisten (Münzen, Tasten …) → X'],
-    ['ol', 'mögliche Ausgaben auflisten → Y'],
-    ['ol', 'für jeden Zustand und jede Eingabe: wohin und was kommt raus'],
-    ['ol', 'Sonderfälle klären: zu viel Geld, Taste ohne Geld, falsche Reihenfolge'],
-    ['h3', 'Übergangstabelle mit Ausgabe'],
-    ['p', 'Beispiel: Automat, der jede 0 in eine 1 und jede 1 in eine 0 umwandelt. Er braucht nur einen Zustand:'],
-    ['table', [['Zustand', 'Eingabe', 'Ausgabe', 'neuer Zustand'], ['z0', '0', '1', 'z0'], ['z0', '1', '0', 'z0']]],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Was gibt der Umwandler oben bei der Eingabe 0110 aus?', [
-      ['p', '<b>Lösung:</b> 1001'],
-    ]],
-    ['toggle', '2) Ein Automat soll nach jeder Eingabe ausgeben, ob bisher eine gerade (g) oder ungerade (u) Anzahl an Einsen kam. Wie sieht er aus?', [
-      ['table', [['Zustand', 'Eingabe', 'Ausgabe', 'neuer Zustand'], ['G', '0', 'g', 'G'], ['G', '1', 'u', 'U'], ['U', '0', 'u', 'U'], ['U', '1', 'g', 'G']]],
-      ['p', '<b>Lösung:</b> Bei der Eingabe 1011 ist die Ausgabe u, u, g, u.'],
-    ]],
-    ['toggle', '3) Warum braucht ein Getränkeautomat mit Preis 1,50 € und 50-ct-Münzen mindestens 4 Zustände?', [
-      ['p', '<b>Lösung:</b> Er muss sich 0 €, 0,50 €, 1,00 € und 1,50 € merken können. Jeder Betrag ist ein eigener Zustand.'],
-    ]],
+    ['arrow', ['beim Mealy-Automaten hängt die Ausgabe vom Zustand UND von der Eingabe ab', 'pro Eingabe kommt genau eine Ausgabe raus', 'ein allgemeiner Transduktor darf pro Eingabe auch mehrere oder gar keine Zeichen ausgeben']],
   ] },
 
 { id: 'e0923', title: 'Automaten mit Ausgabe (Mealy)', icon: '', datum: '2026-09-23', thema: 'Mealy-Automaten', werkzeug: 'FLACI', gefuehl: 'mittel', art: 'Unterricht', edited: '24.09.2026 20:45',
@@ -398,22 +314,11 @@ const EINTRAEGE = [
     ['h3', 'Übersetzen'],
     ['table', [['Syntaxdiagramm', 'regulärer Ausdruck', 'Grammatik'], ['Sequenz', 'ab', 'S → aB'], ['Alternative', 'a|b', 'S → a | b'], ['Option', 'a?', 'S → a | ε'], ['Wiederholung', 'a+', 'S → aS | a'], ['Nichtterminal ruft sich selbst auf (Rekursion)', 'geht nicht', 'S → aSb | ab (kontextfrei)']]],
     ['arrow', ['ohne Rekursion: Syntaxdiagramm = regulärer Ausdruck = endlicher Automat', 'mit echter Rekursion (Klammern, „links und rechts gleich viele“): nur Grammatik, kein endlicher Automat']],
-    ['h3', 'So lese ich ein Diagramm (Wegbeschreibung)'],
+    ['h3', 'Wegbeschreibung'],
     ['ol', 'im Hauptdiagramm starten'],
     ['ol', 'bei jedem Nichtterminal in dessen Diagramm springen und danach zurückkommen'],
     ['ol', 'jeden Zwischenstand aufschreiben: Ausdruck → Summand + Summand → …'],
     ['ol', 'am Ende stehen nur noch Terminale da'],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Ein Diagramm: Ziffer, dann Wiederholung von Ziffer, dann optional „,“ mit zwei Ziffern. Welche Zahlen sind gültig: 7, 12,5, 3,50, ,99?', [
-      ['p', '<b>Lösung:</b> 7 und 3,50 sind gültig. 12,5 nicht, weil nach dem Komma genau zwei Ziffern kommen müssen. ,99 nicht, weil am Anfang mindestens eine Ziffer stehen muss.'],
-    ]],
-    ['toggle', '2) Zeichne ein Syntaxdiagramm für Benutzernamen: Buchstabe am Anfang, danach Buchstaben, Ziffern oder _ (beliebig oft).', [
-      ['code', '──[Buchstabe]──┬──────────────────────┬──►\n               │  ┌──[Buchstabe]──┐   │\n               └──┼──[Ziffer]─────┼───┘\n                  │  └──( _ )─────┘   ▲\n                  └────────◄──────────┘'],
-      ['p', '<b>Lösung:</b> Als regulärer Ausdruck: <code>[A-Za-z][A-Za-z0-9_]*</code>'],
-    ]],
-    ['toggle', '3) Kann man „gleich viele öffnende und schließende Klammern“ ohne Rekursion darstellen?', [
-      ['p', '<b>Lösung:</b> Nein. Eine Schleife kann nicht mitzählen, wie oft sie vorher durchlaufen wurde. Man braucht ein Diagramm, das sich selbst aufruft: Klammer → ( [Klammer] ) oder leer.'],
-    ]],
   ] },
 
 { id: 'e0930', title: 'Syntaxdiagramme', icon: '', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '01.10.2026 17:05',
@@ -428,6 +333,14 @@ const EINTRAEGE = [
       ['code', 'x-(y-2):\nAusdruck → Summand - Summand → Faktor - Summand → Variable - Summand\n→ x - Summand → x - Faktor → x - ( Ausdruck ) → x - ( Summand - Summand )\n→ x - ( Faktor - Summand ) → x - ( Variable - Summand ) → x - ( y - Summand )\n→ x - ( y - Faktor ) → x - ( y - Zahl ) → x - ( y - Ziffer ) → x - ( y - 2 )'],
       ['code', '(x+y)*(x-y):\nAusdruck → Summand → Faktor * Faktor → ( Ausdruck ) * Faktor\n→ ( Summand + Summand ) * Faktor → ( Faktor + Faktor ) * Faktor\n→ ( Variable + Variable ) * Faktor → ( x + y ) * Faktor → ( x + y ) * ( Ausdruck )\n→ ( x + y ) * ( Summand - Summand ) → ( x + y ) * ( Faktor - Faktor )\n→ ( x + y ) * ( Variable - Variable ) → ( x + y ) * ( x - y )'],
       ['arrow', ['bei der Klammer springt man aus Faktor wieder ganz nach oben zu Ausdruck', 'dadurch kann man Klammern beliebig tief schachteln']],
+    ]],
+    ['toggle', 'Aufgabe 1 – Frohlocken', [
+      ['p', 'Die himmlische Sprache „Frohlocken“ ist mit zwei Syntaxdiagrammen festgelegt:'],
+      ['code', 'Frohlocken:      ──[HosiannaSingen]──( . )──┬──►\n                     ▲                       │\n                     └───────────◄───────────┘\n\nHosiannaSingen:  ──┬──(ha)+──( l )──(le)+──┬──( lu )──( u )*──( ja )──►\n                   └───────────────────────┘'],
+      ['arrow', ['Frohlocken = ein oder mehrere HosiannaSingen, jedes mit einem Punkt dahinter', 'der Teil mit ha, l und le ist optional', 'zwischen lu und ja dürfen beliebig viele weitere u stehen']],
+      ['p', 'Meine Wörter: luja., halleluja., hahalleluuuja., luja.luja.'],
+      ['p', '<b>Zusatz: gültig oder nicht?</b>'],
+      ['table', [['Wort', 'gültig?', 'Begründung'], ['luuuja.', 'ja', 'ohne den ha-Teil: lu, uu, ja, dann Punkt'], ['halleluja', 'nein', 'am Ende fehlt der Punkt'], ['haleluja.', 'nein', 'nach „hal“ muss „le“ kommen, hier steht nur „e“'], ['halleluja..luja.', 'nein', 'nach dem ersten Punkt muss wieder ein HosiannaSingen kommen, kein zweiter Punkt'], ['hahalleleluuja.luja.', 'ja', 'ha zweimal, l, le zweimal, luuja, Punkt, dann noch einmal luja.']]],
     ]],
     ['toggle', 'Aufgabe 3 – ipigisi', [
       ['p', '<b>a)</b> isi-Folge (i, isi, isisi, …):'],
@@ -451,7 +364,7 @@ const EINTRAEGE = [
     ]],
     ['h3', 'Ziel, Zusammenfassung, Reflexion'],
     ['p', '<b>Ziel:</b> Ich wollte Syntaxdiagramme lesen, Wegbeschreibungen aufschreiben und selbst Diagramme für eine Sprache entwerfen können.'],
-    ['p', '<b>Zusammenfassung:</b> Syntaxdiagramme bestehen aus Terminalen, Nichtterminalen und den vier Grundstrukturen Sequenz, Alternative, Option und Wiederholung. Bei den Rechenausdrücken habe ich Wegbeschreibungen aufgeschrieben und gesehen, dass Klammern durch Rekursion möglich sind. Für die isi- und ipigisi-Folgen habe ich eigene Diagramme gezeichnet. Bei den E-Mail-Adressen musste ich eine ungenaue Beschreibung erst präzisieren.'],
+    ['p', '<b>Zusammenfassung:</b> Syntaxdiagramme bestehen aus Terminalen, Nichtterminalen und den vier Grundstrukturen Sequenz, Alternative, Option und Wiederholung. Bei den Rechenausdrücken habe ich Wegbeschreibungen aufgeschrieben und gesehen, dass Klammern durch Rekursion möglich sind. Bei Frohlocken habe ich Wörter gebildet und geprüft, ob sie gültig sind. Für die isi- und ipigisi-Folgen habe ich eigene Diagramme gezeichnet. Bei den E-Mail-Adressen musste ich eine ungenaue Beschreibung erst präzisieren.'],
     ['p', '<b>Reflexion:</b> Heute hat vieles zusammengepasst: Syntaxdiagramm ohne Rekursion ist dasselbe wie ein regulärer Ausdruck, mit Rekursion dasselbe wie eine Grammatik. Dass die mathematisch korrekten ipigisi-Ausdrücke genau Ipogesien sind, hat mich überrascht. Schwierig fand ich die langen Wegbeschreibungen, weil man leicht einen Schritt vergisst.'],
   ] },
 
@@ -471,24 +384,10 @@ const EINTRAEGE = [
     ['table', [['Bedingung', 'gilt genau dann wenn', 'Befehle'], ['a > b', 'a − b > 0', 'LOAD a, SUB b, JNZERO'], ['a ≤ b', 'a − b = 0', 'LOAD a, SUB b, JZERO'], ['a < b', 'b − a > 0', 'LOAD b, SUB a, JNZERO'], ['a ≥ b', 'b − a = 0', 'LOAD b, SUB a, JZERO']]],
     ['h3', 'Muster für Kontrollstrukturen'],
     ['code', 'if (a > b) {A} else {B}      while (a > 0) {…}         do {…} while (a > b)\n\n      LOAD a                  Kopf: LOAD a              Start: …\n      SUB b                         JZERO Ende                   LOAD a\n      JZERO Sonst                   …                            SUB b\n      … (A)                         GOTO Kopf                    JNZERO Start\n      GOTO Weiter             Ende: …\nSonst: … (B)\nWeiter: …'],
-    ['h3', 'Ablaufprotokoll – meine Tipps'],
-    ['ul', 'Tabelle mit Nr., Befehl, Akku und allen benutzten Registern'],
-    ['ul', 'erste Zeile = Startbelegung'],
-    ['ul', 'unter Zeitdruck: nur die Zeilen mit STORE aufschreiben'],
-    ['ul', 'bei jedem Operanden kurz prüfen: # oder nicht?'],
     ['h3', 'Zeit und Speicher (Einheitskostenmaß)'],
     ['ul', 'Zeit = Anzahl der ausgeführten Befehle (END zählt mit)'],
     ['ul', 'Speicher = Anzahl der benutzten Register'],
     ['ul', 'Formel finden: Befehle vor der Schleife + Befehle pro Durchlauf · Anzahl Durchläufe + Befehle beim Verlassen'],
-    ['h3', 'Teste dich'],
-    ['toggle', '1) Akku = 3. Was steht nach SUB #5 im Akku?', [['p', '<b>Lösung:</b> 0, weil SUB nie negativ wird.']]],
-    ['toggle', '2) R2 = 4, R4 = 9. Was steht nach LOAD *2 im Akku?', [['p', '<b>Lösung:</b> 9. In R2 steht 4, also wird R4 geladen.']]],
-    ['toggle', '3) Akku = 7. Was steht nach DIV #2 im Akku?', [['p', '<b>Lösung:</b> 3 (ganzzahlig, der Rest fällt weg).']]],
-    ['toggle', '4) Schreibe ein Programm, das das Maximum von R1 und R2 in R3 speichert.', [
-      ['code', '       LOAD 1\n       SUB 2\n       JZERO zwei     // r1 <= r2\n       LOAD 1\n       STORE 3\n       GOTO Ende\nzwei:  LOAD 2\n       STORE 3\nEnde:  END'],
-      ['p', 'Kontrolle: (3, 8) → 8, (8, 3) → 8, (5, 5) → 5.'],
-    ]],
-    ['toggle', '5) Ein Programm braucht 2 Befehle vor der Schleife, 6 pro Durchlauf und 3 am Ende. Die Schleife läuft n-mal. Wie viele Befehle insgesamt?', [['p', '<b>Lösung:</b> Zeit(n) = 6 · n + 5']]],
   ] },
 
 { id: 'e1028', title: 'Registermaschine: Anfang', icon: '', datum: '2026-10-28', thema: 'Registermaschine', werkzeug: 'RM-Simulator, Heft', gefuehl: 'mittel', art: 'Unterricht', edited: '29.10.2026 19:40',
@@ -500,6 +399,9 @@ const EINTRAEGE = [
     ['code', '      LOAD #0\n      STORE 2\nM:    LOAD 1\n      DIV #2\n      STORE 1\n      JZERO Ende\n      LOAD 2\n      ADD #1\n      STORE 2\n      GOTO M\nEnde: END'],
     ['toggle', 'Ablaufprotokoll für R1 = 6', [
       ['table', [['Nr.', 'Befehl', 'Akku', 'R1', 'R2'], ['', 'Start', '0', '6', '0'], ['1', 'LOAD #0', '0', '6', '0'], ['2', 'STORE 2', '0', '6', '0'], ['3', 'M: LOAD 1', '6', '6', '0'], ['4', 'DIV #2', '3', '6', '0'], ['5', 'STORE 1', '3', '3', '0'], ['6', 'JZERO Ende', '3', '3', '0'], ['7', 'LOAD 2', '0', '3', '0'], ['8', 'ADD #1', '1', '3', '0'], ['9', 'STORE 2', '1', '3', '1'], ['10', 'GOTO M', '1', '3', '1'], ['11', 'M: LOAD 1', '3', '3', '1'], ['12', 'DIV #2', '1', '3', '1'], ['13', 'STORE 1', '1', '1', '1'], ['14', 'JZERO Ende', '1', '1', '1'], ['15', 'LOAD 2', '1', '1', '1'], ['16', 'ADD #1', '2', '1', '1'], ['17', 'STORE 2', '2', '1', '2'], ['18', 'GOTO M', '2', '1', '2'], ['19', 'M: LOAD 1', '1', '1', '2'], ['20', 'DIV #2', '0', '1', '2'], ['21', 'STORE 1', '0', '0', '2'], ['22', 'JZERO Ende', '0', '0', '2'], ['23', 'Ende: END', '0', '0', '2']]],
+    ]],
+    ['toggle', 'Selbstcheck aus dem Lernpaket', [
+      ['table', [['Frage', 'meine Antwort'], ['Akku = 3, dann SUB #5', '0, SUB wird nie negativ'], ['R2 = 4, R4 = 9, dann LOAD *2', '9, weil in R2 die 4 steht und damit R4 geladen wird'], ['Akku = 7, dann DIV #2', '3, der Rest fällt weg'], ['Welcher Befehl ist nicht erlaubt?', 'STORE mit einer Konstanten, z. B. STORE #3'], ['Akku = 0, dann JNZERO M1', 'es wird nicht gesprungen, es geht mit der nächsten Zeile weiter']]],
     ]],
     ['callout', '⚠️', 'red', 'Bei b) hatte ich zuerst „immer 2“ geschrieben, weil bei n = 6 eine 2 rauskam. Mit anderen Werten sieht man aber: n = 1 → 0, n = 8 → 3, n = 15 → 3, n = 16 → 4.'],
     ['p', '<b>b)</b> R2 sagt, wie oft man n ganzzahlig halbieren kann, bis 1 erreicht ist.'],
