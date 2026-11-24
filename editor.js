@@ -135,7 +135,7 @@ function save(touch = true) {
   histMark(); updHist();
   if (touch && DOC.pages[CUR]) { DOC.pages[CUR].edited = nowStr(); const ed = $('#edited'); if (ed) ed.textContent = 'Bearbeitet ' + DOC.pages[CUR].edited; }
   clearTimeout(saveT);
-  saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(DOC)); } catch (e) { } }, 250);
+  saveT = setTimeout(() => { saveT = null; try { localStorage.setItem(KEY, JSON.stringify(DOC)); } catch (e) { alert('Speichern im Browser hat nicht geklappt. Bitte über ••• → Sicherung herunterladen sichern.'); } }, 250);
 }
 function findIn(list, id, parent) {
   for (let i = 0; i < list.length; i++) {
@@ -1173,6 +1173,10 @@ async function mergeOld(owner) {
 function backups() { const r = []; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith(KEY + '-alt')) r.push(k); } } catch (er) { } return r.sort(); }
 function download(name, text) { const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name }); document.body.append(a); a.click(); a.remove(); }
 window.addEventListener('pagehide', () => { if (saveT) { clearTimeout(saveT); saveT = null; persist(); } });
+window.addEventListener('storage', ev => {
+  if (ev.key !== KEY || !ev.newValue || saveT) return;
+  try { if (localStorage.getItem(OWNER_FLAG) !== OWNER_HASH) return; const d = JSON.parse(ev.newValue); if (d && d.pages) { DOC = d; if (!DOC.pages[CUR]) CUR = 'home'; LAST = JSON.stringify(DOC); closePop(); render(); updHist(); } } catch (er) { }
+});
 async function start() {
   const owner = await checkOwner();
   BASE = buildDoc();
