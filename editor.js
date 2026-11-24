@@ -773,18 +773,6 @@ function panelPages(B) {
     h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, p.icon ? h('span', { class: 'ci' }, p.icon, ' ') : '', p.title || 'Unbenannt'),
     p.id !== 'home' ? h('button', { class: 'pb danger', title: 'Seite löschen', onclick: () => deletePage(p.id) }, '×') : null)));
   B.append(list, pc(pbtn('+ Neue Seite', newPage)));
-  B.append(h('div', { class: 'psep' }), plabel('Online speichern'));
-  let tok = null; try { tok = localStorage.getItem(TKEY); } catch (er) { }
-  if (tok) {
-    B.append(h('p', { class: 'pmut' }, 'Änderungen sind zuerst nur auf diesem Gerät gespeichert. Mit „Veröffentlichen“ werden sie für alle übernommen (dauert ca. 1 Minute).'));
-    B.append(pc(h('button', { class: 'pb pri', onclick: ev => publish(ev.target) }, 'Veröffentlichen'), pbtn('Token entfernen', () => { localStorage.removeItem(TKEY); renderPanel(); }, 'danger')));
-  } else {
-    const ti = h('input', { type: 'password', class: 'pin', placeholder: 'GitHub-Token', autocomplete: 'off' });
-    B.append(h('p', { class: 'pmut' }, 'Zum Veröffentlichen einmal einen GitHub-Token mit Schreibrecht auf das Repo eintragen. Er bleibt nur auf diesem Gerät.'));
-    B.append(pc(ti), pc(pbtn('Token speichern', () => { if (ti.value.trim()) { localStorage.setItem(TKEY, ti.value.trim()); renderPanel(); } })));
-    B.append(h('p', { class: 'pmut' }, h('a', { href: 'https://github.com/settings/personal-access-tokens/new', target: '_blank', rel: 'noopener' }, 'Token bei GitHub erstellen')));
-  }
-  B.append(pc(pbtn('Als data.json exportieren', exportDoc)));
 }
 function deletePage(id) {
   const p = DOC.pages[id]; if (!p || id === 'home') return;
@@ -979,7 +967,7 @@ async function start() {
     POP.style.left = Math.max(8, $('#more').getBoundingClientRect().right - 230) + 'px';
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
     if (localStorage.getItem(TKEY)) it('Veröffentlichen', () => publish($('#editbtn')));
-    it('Als data.json exportieren', exportDoc);
+    else it('Veröffentlichen einrichten', () => { const t = prompt('GitHub-Token (Contents: Read and write für das Repo):'); if (t && t.trim()) { localStorage.setItem(TKEY, t.trim()); } });
     if (localStorage.getItem(KEY + '-alt')) it('Ältere Änderungen exportieren', () => { const a = h('a', { href: URL.createObjectURL(new Blob([localStorage.getItem(KEY + '-alt')], { type: 'application/json' })), download: 'data-alt.json' }); document.body.append(a); a.click(); a.remove(); });
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
     it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } commitHist(); UNDO.push(LAST); DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; LAST = JSON.stringify(DOC); REDO = []; persist(); render(); updHist(); } }, 'danger');
