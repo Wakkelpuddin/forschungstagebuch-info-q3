@@ -1053,7 +1053,7 @@ async function publish(btn) {
     const commit = await ghApi('/git/commits/' + head);
     const blob = await ghApi('/git/blobs', { method: 'POST', body: JSON.stringify({ content: JSON.stringify(data), encoding: 'utf-8' }) });
     const tree = await ghApi('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: [{ path: 'data.json', mode: '100644', type: 'blob', sha: blob.sha }] }) });
-    const neu = await ghApi('/git/commits', { method: 'POST', body: JSON.stringify({ message: 'Änderungen', tree: tree.sha, parents: [head] }) });
+    const neu = await ghApi('/git/commits', { method: 'POST', body: JSON.stringify({ message: 'Änderungen', tree: tree.sha, parents: [head], author: { name: 'Wakkelpuddin', email: '287058487+Wakkelpuddin@users.noreply.github.com' } }) });
     await ghApi('/git/refs/heads/main', { method: 'PATCH', body: JSON.stringify({ sha: neu.sha }) });
     BASE = JSON.parse(JSON.stringify(data)); try { localStorage.setItem(BKEY, JSON.stringify(BASE)); } catch (er) { } DOC.base = data.stamp; DOC.stamp = data.stamp; save(false); clearTimeout(histT); histT = null; LAST = JSON.stringify(DOC); updHist();
     btn.textContent = 'Veröffentlicht ✓';
