@@ -1,5 +1,4 @@
 'use strict';
-/* kleiner Block-Editor im Notion-Stil */
 const KEY = 'ftbq3-doc';
 let DOC, BASE, EDIT = false, CUR = 'home', DRAG = null, MENU = null, POP = null;
 
@@ -23,7 +22,8 @@ const kurzDatum = iso => { if (!iso) return ''; const [, m, d] = iso.split('-');
 
 const THEMEN = { 'Einstieg': 'gray', 'Endliche Automaten': 'blue', 'Reguläre Ausdrücke': 'green', 'Grammatiken': 'orange', 'Mealy-Automaten': 'purple', 'Syntaxdiagramme': 'pink', 'Registermaschine': 'brown', 'Klausur': 'red' };
 const GEFUEHL = { 'gut': 'green', 'mittel': 'yellow', 'schwer': 'red' };
-const ARTEN = { 'Unterricht': 'gray', 'Arbeitsauftrag': 'blue' };
+const ARTEN = { 'Unterricht': 'gray', 'Arbeitsauftrag': 'blue', 'Themenzettel': 'purple' };
+const sortKey = p => (p.props.datum || '9') + (p.props.art === 'Themenzettel' ? '0' : '1');
 const chip = (txt, map) => txt ? h('span', { class: 'chip c-' + (map[txt] || 'gray') }, txt) : '';
 
 const TYPES = [
@@ -44,7 +44,6 @@ const TYPES = [
 ];
 const TEXTY = ['p', 'h2', 'h3', 'ul', 'ol', 'todo', 'toggle', 'callout', 'quote'];
 
-/* ---------- Datenmodell ---------- */
 function nb(a) {
   const [t, ...r] = a; const b = { id: uid(), t };
   switch (t) {
@@ -64,7 +63,7 @@ function buildDoc() {
   const pages = {};
   const mk = (p, extra) => Object.assign({ id: p.id, title: p.title, icon: p.icon, cover: !!p.cover, edited: p.edited, blocks: p.blocks.map(nb) }, extra);
   pages.home = mk(START);
-  EINTRAEGE.forEach(e => pages[e.id] = mk(e, { props: { datum: e.datum, thema: e.thema, werkzeug: e.werkzeug, gefuehl: e.gefuehl, art: e.art } }));
+  EINTRAEGE.forEach(e => pages[e.id] = mk(e, { props: { datum: e.datum, thema: e.thema, werkzeug: e.werkzeug, gefuehl: e.gefuehl, art: e.art }, hide: e.art === 'Themenzettel' ? ['werkzeug', 'gefuehl'] : [] }));
   EXTRA.forEach(e => pages[e.id] = mk(e));
   return { stamp: 'c' + CONTENT_VERSION, pages, rows: EINTRAEGE.map(e => e.id) };
 }
@@ -105,7 +104,6 @@ function convert(b, t) {
   if (t === 'toggle') b.open = true;
 }
 
-/* ---------- freies Verschieben ---------- */
 function applyOff(el, o, px = 'dx', py = 'dy') {
   const x = o[px] || 0, y = o[py] || 0;
   el.style.transform = (x || y) ? 'translate(' + x + 'px,' + y + 'px)' : '';
@@ -126,7 +124,6 @@ function freeHandle(el, o, px = 'dx', py = 'dy') {
   el.append(hd);
 }
 
-/* ---------- Seiten ---------- */
 function go(id) { closePop(); SEL = null; CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
 function render() {
   const p = DOC.pages[CUR] || DOC.pages.home; CUR = p.id;
@@ -201,7 +198,6 @@ function setEditable(el, plain) {
   el.addEventListener('paste', e => { e.preventDefault(); const t = (e.clipboardData || window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
 }
 
-/* Eigenschaften eines Eintrags */
 function propsEl(p) {
   const P = p.props, box = h('div', { class: 'props' });
   const hide = p.hide || [], KEYS = { 'Datum': 'datum', 'Thema': 'thema', 'Werkzeug': 'werkzeug', 'Gefühl': 'gefuehl', 'Art': 'art' };
@@ -215,7 +211,6 @@ function propsEl(p) {
   return box;
 }
 
-/* ---------- Blöcke ---------- */
 function renderList(list, cont) { let n = 0; list.forEach(b => { n = b.t === 'ol' ? n + 1 : 0; cont.append(blockEl(b, list, n)); }); }
 function textEl(tag, b, ph) {
   const el = h(tag, { class: 'tx', 'data-ph': ph || '' }); el.innerHTML = b.html || '';
@@ -333,7 +328,6 @@ function blockEl(b, list, num) {
 }
 function clearDrop() { document.querySelectorAll('.drop-before,.drop-after').forEach(x => x.classList.remove('drop-before', 'drop-after')); }
 
-/* Tabelle */
 function tableEl(b, w, list, num) {
   const box = h('div', { class: 'tblw' }), t = h('table', { class: 'tbl' });
   b.rows.forEach((r, ri) => {
@@ -353,7 +347,6 @@ function tableEl(b, w, list, num) {
   return box;
 }
 
-/* Bild mit Pfeil-Markierungen */
 function imgEl(b, w, list, num) {
   const fig = h('figure', { class: 'fig w-' + (b.w || 'L') });
   const redraw = () => w.replaceWith(blockEl(b, list, num));
@@ -423,7 +416,6 @@ function loadImage(file, cb) {
   fr.readAsDataURL(file);
 }
 
-/* ---------- Datenbank ---------- */
 let VIEW = null;
 const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['thema', '▤', 'Nach Thema']];
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
@@ -443,7 +435,7 @@ function dbEl(b) {
     tabs.append(h('button', { class: 'dbtab' + (VIEW === k ? ' on' : ''), onclick: () => { VIEW = k; render(); } }, h('span', { class: 'ti' }, ic), n)));
   if (b.title !== '') wrap.append(h('div', { class: 'dbtitle' }, b.title || 'Unterrichtstage'));
   if (views.length > 1) wrap.append(tabs);
-  const rows = DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => (a.props.datum || '9').localeCompare(b.props.datum || '9'));
+  const rows = DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
   const open = p => h('a', { class: 'rowlink', href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, h('span', { class: 'ci' }, p.icon), p.title || 'Unbenannt');
   if (VIEW === 'tab') {
     const shown = DBCOLS.filter(c => cols.includes(c[0]));
@@ -464,7 +456,7 @@ function dbEl(b) {
       const m = p.props.datum ? MONATE[+p.props.datum.slice(5, 7) - 1] + ' ' + p.props.datum.slice(0, 4) : 'ohne Datum';
       if (m !== mon) { mon = m; tl.append(h('div', { class: 'tlm' }, m)); }
       tl.append(h('div', { class: 'tli', onclick: () => go(p.id) }, h('span', { class: 'tld' }, kurzDatum(p.props.datum)), h('span', { class: 'dot' }),
-        h('span', { class: 'tlt' }, h('span', { class: 'ci' }, p.icon), p.title), h('span', { class: 'tlc' }, chip(p.props.thema, THEMEN), p.props.art === 'Arbeitsauftrag' ? chip('Arbeitsauftrag', ARTEN) : '')));
+        h('span', { class: 'tlt' }, h('span', { class: 'ci' }, p.icon), p.title), h('span', { class: 'tlc' }, chip(p.props.thema, THEMEN), p.props.art && p.props.art !== 'Unterricht' ? chip(p.props.art, ARTEN) : '')));
     });
     wrap.append(tl);
   }
@@ -472,7 +464,6 @@ function dbEl(b) {
   return wrap;
 }
 
-/* ================= Kontrollleiste rechts ================= */
 let SEL = null, PTAB = 'block';
 const COLORS = [['', 'Standard'], ['gray', 'Grau'], ['brown', 'Braun'], ['orange', 'Orange'], ['yellow', 'Gelb'], ['green', 'Grün'], ['blue', 'Blau'], ['purple', 'Lila'], ['pink', 'Pink'], ['red', 'Rot']];
 const CONVERTIBLE = ['p', 'h2', 'h3', 'ul', 'ol', 'todo', 'toggle', 'callout', 'quote', 'code', 'arrow'];
@@ -620,7 +611,7 @@ function panelPage(B) {
 }
 function panelPages(B) {
   const list = h('div', { class: 'plist' });
-  const pages = [DOC.pages.home, ...DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => (a.props.datum || '9').localeCompare(b.props.datum || '9')), ...Object.values(DOC.pages).filter(p => p.id !== 'home' && !DOC.rows.includes(p.id))];
+  const pages = [DOC.pages.home, ...DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => sortKey(a).localeCompare(sortKey(b))), ...Object.values(DOC.pages).filter(p => p.id !== 'home' && !DOC.rows.includes(p.id))];
   pages.forEach(p => list.append(h('div', { class: 'pli' + (p.id === CUR ? ' on' : '') },
     h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, h('span', { class: 'ci' }, p.icon || '📄'), ' ', p.title || 'Unbenannt'),
     p.id !== 'home' ? h('button', { class: 'pb danger', title: 'Seite löschen', onclick: () => deletePage(p.id) }, '×') : null)));
@@ -638,7 +629,6 @@ function deletePage(id) {
   if (CUR === id) go('home'); else render();
 }
 
-/* ---------- Tastatur, Slash-Menü, Markdown-Kürzel ---------- */
 function caretAtStart(el) {
   const s = getSelection(); if (!s.rangeCount || !s.isCollapsed) return false;
   const r = s.getRangeAt(0), pre = document.createRange(); pre.selectNodeContents(el); pre.setEnd(r.startContainer, r.startOffset);
@@ -754,7 +744,6 @@ function focusEl(el, end = true) {
 }
 function focusBlock(id, end = true) { const w = $(`[data-id="${id}"]`); if (!w) return; focusEl(w.querySelector('.tx, pre.code'), end); }
 
-/* ---------- Start ---------- */
 function exportDoc() {
   const data = JSON.parse(JSON.stringify(DOC)); data.stamp = 'x' + Date.now();
   const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })), download: 'data.json' });
@@ -779,7 +768,13 @@ async function start() {
   BASE = buildDoc();
   try { const r = await fetch('data.json', { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && d.pages && d.stamp) BASE = d; } } catch (e) { }
   DOC = BASE;
-  if (owner) { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.base === BASE.stamp && s.pages) DOC = s; } catch (e) { } }
+  if (owner) {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY));
+      if (s && s.base === BASE.stamp && s.pages) DOC = s;
+      else if (s && s.pages) localStorage.setItem(KEY + '-alt', JSON.stringify(s));
+    } catch (e) { }
+  }
   DOC.base = BASE.stamp;
   CUR = location.hash.slice(1) || 'home';
   if (!owner) { $('#editbtn').remove(); $('#more').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
@@ -790,6 +785,7 @@ async function start() {
     POP.style.left = Math.max(8, $('#more').getBoundingClientRect().right - 230) + 'px';
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
     it('Als data.json exportieren', exportDoc);
+    if (localStorage.getItem(KEY + '-alt')) it('Ältere Änderungen exportieren', () => { const a = h('a', { href: URL.createObjectURL(new Blob([localStorage.getItem(KEY + '-alt')], { type: 'application/json' })), download: 'data-alt.json' }); document.body.append(a); a.click(); a.remove(); });
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
     it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; render(); } }, 'danger');
   };
