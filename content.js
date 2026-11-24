@@ -320,8 +320,8 @@ const EINTRAEGE = [
 
 { id: 'e0930', title: 'Syntaxdiagramme', icon: '', datum: '2026-09-30', thema: 'Syntaxdiagramme', werkzeug: 'Heft', gefuehl: 'gut', art: 'Unterricht', edited: '01.10.2026 17:05',
   blocks: [
-    ['p', 'Ein Syntaxdiagramm zeigt eine Grammatik als Bild. Weil es wie ein Gleisplan aussieht, heißt es auch Railroad-Diagramm. Die Bausteine und Grundstrukturen stehen im <b>Themenzettel Syntaxdiagramme</b>.'],
-    ['p', 'Ein einfaches Beispiel ist der „Bezeichner“ (Variablenname): erst ein Buchstabe, danach beliebig viele Buchstaben oder Ziffern. x2a ist gültig, 2x nicht, weil am Anfang kein Buchstabe steht.'],
+    ['p', 'Heute ging es um Syntaxdiagramme. Damit kann man die Regeln einer Sprache als Bild darstellen, also welche Zeichenketten erlaubt sind und welche nicht. Man liest sie von links nach rechts und folgt den Pfeilen. Jeder Weg bis zum Ende ergibt ein gültiges Wort. Die Bausteine habe ich im <b>Themenzettel Syntaxdiagramme</b> aufgeschrieben.'],
+    ['p', 'Ein Beispiel ist ein Bezeichner, also ein Variablenname: Er muss mit einem Buchstaben anfangen, danach dürfen beliebig viele Buchstaben oder Ziffern kommen. x2a ist also gültig, 2x nicht.'],
     ['toggle', 'Rechenausdrücke – Wegbeschreibungen', [
       ['p', 'Wenn man auf ein Nichtterminal trifft, springt man in dessen Diagramm und kommt danach zurück. Die Zwischenschritte zusammen ergeben die Wegbeschreibung.'],
       ['p', '<b>a)</b> Die vorgegebene Wegbeschreibung ergibt <code>x+20*y</code>: Im Diagramm Ausdruck wird einmal die Schleife mit + genommen. Der erste Summand wird über Faktor und Variable zu x, der zweite Summand nimmt die Schleife mit *. Der erste Faktor ist eine Zahl mit zwei Ziffern (20), der zweite eine Variable (y).'],
