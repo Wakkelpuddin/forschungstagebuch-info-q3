@@ -75,8 +75,41 @@ function buildDoc() {
   EXTRA.forEach(e => pages[e.id] = mk(e));
   return { stamp: 'c' + CONTENT_VERSION, pages, rows: EINTRAEGE.map(e => e.id) };
 }
+let UNDO = [], REDO = [], LAST = null, histT = null;
+function histInit() { LAST = JSON.stringify(DOC); UNDO = []; REDO = []; updHist(); }
+function histMark() { clearTimeout(histT); histT = setTimeout(commitHist, 500); }
+function commitHist() {
+  histT = null;
+  if (LAST === null) return;
+  const cur = JSON.stringify(DOC); if (cur === LAST) return;
+  UNDO.push(LAST); if (UNDO.length > 150) UNDO.shift();
+  REDO = []; LAST = cur; updHist();
+}
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(DOC)); } catch (er) { } }
+function stepHist(from, to) {
+  if (histT) { clearTimeout(histT); commitHist(); }
+  if (!from.length) return;
+  to.push(LAST); LAST = from.pop(); DOC = JSON.parse(LAST);
+  if (!DOC.pages[CUR]) CUR = 'home';
+  closePop(); persist(); render(); updHist();
+}
+const undo = () => stepHist(UNDO, REDO), redo = () => stepHist(REDO, UNDO);
+function updHist() {
+  const u = $('#undo'), r = $('#redo');
+  if (u) { u.hidden = !EDIT; u.disabled = !UNDO.length && !histT; }
+  if (r) { r.hidden = !EDIT; r.disabled = !REDO.length; }
+}
+document.addEventListener('keydown', ev => {
+  if (!EDIT || !(ev.ctrlKey || ev.metaKey)) return;
+  const k = ev.key.toLowerCase();
+  if (k !== 'z' && k !== 'y') return;
+  const t = ev.target; if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
+  ev.preventDefault();
+  if (k === 'y' || ev.shiftKey) redo(); else undo();
+});
 let saveT;
 function save(touch = true) {
+  histMark(); updHist();
   if (touch && DOC.pages[CUR]) { DOC.pages[CUR].edited = nowStr(); const ed = $('#edited'); if (ed) ed.textContent = 'Bearbeitet ' + DOC.pages[CUR].edited; }
   clearTimeout(saveT);
   saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(DOC)); } catch (e) { } }, 250);
@@ -143,6 +176,7 @@ function render() {
   if ($('#edited')) $('#edited').textContent = 'Bearbeitet ' + (p.edited || '');
   if ($('#editbtn')) $('#editbtn').textContent = EDIT ? 'Fertig' : 'Bearbeiten';
   if ($('#more')) $('#more').hidden = !EDIT;
+  updHist();
 
   const main = $('#page'); main.innerHTML = '';
   main.className = 'page f-' + (p.font || 'sans') + (p.small ? ' small' : '') + (p.full ? ' full' : '');
@@ -893,7 +927,7 @@ async function publish(btn) {
     const tree = await ghApi('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: [{ path: 'data.json', mode: '100644', type: 'blob', sha: blob.sha }] }) });
     const neu = await ghApi('/git/commits', { method: 'POST', body: JSON.stringify({ message: 'Änderungen', tree: tree.sha, parents: [head] }) });
     await ghApi('/git/refs/heads/main', { method: 'PATCH', body: JSON.stringify({ sha: neu.sha }) });
-    BASE = JSON.parse(JSON.stringify(data)); DOC.base = data.stamp; DOC.stamp = data.stamp; save(false);
+    BASE = JSON.parse(JSON.stringify(data)); DOC.base = data.stamp; DOC.stamp = data.stamp; save(false); clearTimeout(histT); histT = null; LAST = JSON.stringify(DOC); updHist();
     btn.textContent = 'Veröffentlicht ✓';
     setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 4000);
   } catch (er) {
@@ -935,7 +969,9 @@ async function start() {
   }
   DOC.base = BASE.stamp;
   CUR = location.hash.slice(1) || 'home';
-  if (!owner) { $('#editbtn').remove(); $('#more').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
+  if (!owner) { $('#editbtn').remove(); $('#more').remove(); $('#undo').remove(); $('#redo').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
+  histInit();
+  $('#undo').onclick = undo; $('#redo').onclick = redo;
   $('#editbtn').onclick = () => { EDIT = !EDIT; SEL = null; PTAB = 'block'; closePop(); render(); };
   $('#more').onclick = e => {
     e.stopPropagation(); closePop();
@@ -946,7 +982,7 @@ async function start() {
     it('Als data.json exportieren', exportDoc);
     if (localStorage.getItem(KEY + '-alt')) it('Ältere Änderungen exportieren', () => { const a = h('a', { href: URL.createObjectURL(new Blob([localStorage.getItem(KEY + '-alt')], { type: 'application/json' })), download: 'data-alt.json' }); document.body.append(a); a.click(); a.remove(); });
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
-    it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; render(); } }, 'danger');
+    it('Alle lokalen Änderungen verwerfen', () => { if (confirm('Alle Änderungen in diesem Browser verwerfen?')) { try { localStorage.removeItem(KEY); } catch (er) { } commitHist(); UNDO.push(LAST); DOC = JSON.parse(JSON.stringify(BASE)); DOC.base = BASE.stamp; LAST = JSON.stringify(DOC); REDO = []; persist(); render(); updHist(); } }, 'danger');
   };
   window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; closePop(); render(); window.scrollTo(0, 0); } });
   render();

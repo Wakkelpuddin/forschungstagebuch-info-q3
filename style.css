@@ -304,3 +304,5 @@ svg.graph .gq.sel .gst{stroke:#2383e2;stroke-width:2.6}
 .pb.pri{background:#2383e2;border-color:#2383e2;color:#fff}
 .pb.pri:hover{background:#1b6fc2}
 .pb:disabled{opacity:.6;cursor:default}
+.tbtn.hist{font-size:17px;padding:2px 8px;line-height:1}
+.tbtn:disabled{opacity:.35;cursor:default;background:none}
