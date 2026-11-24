@@ -106,7 +106,7 @@ function convert(b, t) {
 }
 
 /* ---------- Seiten ---------- */
-function go(id) { closePop(); CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
+function go(id) { closePop(); SEL = null; CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
 function render() {
   const p = DOC.pages[CUR] || DOC.pages.home; CUR = p.id;
   document.body.classList.toggle('edit', EDIT);
@@ -119,22 +119,43 @@ function render() {
   if ($('#more')) $('#more').hidden = !EDIT;
 
   const main = $('#page'); main.innerHTML = '';
-  if (p.cover) main.append(h('div', { class: 'cover' }));
-  const head = h('div', { class: 'phead' + (p.cover ? ' hascover' : '') });
-  const icon = h('div', { class: 'picon', title: EDIT ? 'Icon ändern' : null }, p.icon || '📄');
-  if (EDIT) icon.onclick = e => { e.stopPropagation(); emojiPop(icon, em => { p.icon = em; save(); render(); }); };
+  main.className = 'page f-' + (p.font || 'sans') + (p.small ? ' small' : '') + (p.full ? ' full' : '');
+  if (p.cover) main.append(coverEl(p));
+  const inner = h('div', { class: 'inner' }); main.append(inner);
+  const head = h('div', { class: 'phead' + (p.cover ? ' hascover' : '') + (p.icon ? '' : ' noicon') });
+  if (EDIT) {
+    head.addEventListener('mousedown', () => { if (PTAB !== 'seite') { PTAB = 'seite'; renderPanel(); } });
+    const tools = h('div', { class: 'ptools' });
+    if (!p.icon) tools.append(h('button', { onclick: () => { p.icon = '📄'; save(); render(); } }, '☺ Icon hinzufügen'));
+    if (!p.cover) tools.append(h('button', { onclick: () => { p.cover = true; save(); render(); } }, '🖼 Titelbild hinzufügen'));
+    if (tools.childNodes.length) head.append(tools);
+  }
+  const icon = p.icon ? h('div', { class: 'picon', title: EDIT ? 'Icon ändern' : null }, p.icon) : null;
+  if (EDIT && icon) icon.onclick = e => { e.stopPropagation(); emojiPop(icon, em => { p.icon = em; save(); render(); }, () => { p.icon = ''; save(); render(); }); };
   const title = h('h1', { class: 'ptitle', 'data-ph': 'Unbenannt' }); title.textContent = p.title;
   if (EDIT) {
     setEditable(title, true);
     title.oninput = () => { p.title = title.textContent; save(); const c = $('.crumb.cur', cr); if (c) c.lastChild.textContent = p.title; };
     title.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const f = p.blocks[0]; if (f && 'html' in f) focusBlock(f.id); } };
   }
-  head.append(icon, title);
+  if (icon) head.append(icon);
+  head.append(title);
   if (p.props) head.append(propsEl(p));
-  main.append(head);
-  const body = h('div', { class: 'blocks' }); renderList(p.blocks, body); main.append(body);
-  if (EDIT) main.append(h('div', { class: 'addend', onclick: () => { const n = nb(['p']); p.blocks.push(n); save(); render(); focusBlock(n.id); } }, '+ Klicken, um einen Block hinzuzufügen'));
+  inner.append(head);
+  const body = h('div', { class: 'blocks' }); renderList(p.blocks, body); inner.append(body);
+  if (EDIT) inner.append(h('div', { class: 'addend', onclick: () => { const n = nb(['p']); p.blocks.push(n); SEL = n.id; save(); render(); focusBlock(n.id); } }, '+ Klicken, um einen Block hinzuzufügen'));
   document.title = (p.title || 'Unbenannt') + ' · Forschungstagebuch Q3';
+  if (!NOPANEL) renderPanel();
+}
+let NOPANEL = false;
+function renderPage() { NOPANEL = true; try { render(); } finally { NOPANEL = false; } }
+const COVERS = { sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
+function coverEl(p) {
+  const [bg, fg] = COVERS[p.coverColor || 'sand'] || COVERS.sand;
+  const c = h('div', { class: 'cover cv-' + (p.coverStyle || 'dots') });
+  c.style.setProperty('--cbg', bg); c.style.setProperty('--cfg', fg);
+  if (p.coverImg) { c.style.backgroundImage = `url(${p.coverImg})`; c.classList.add('cv-img'); }
+  return c;
 }
 function setEditable(el, plain) {
   el.contentEditable = plain ? 'plaintext-only' : 'true';
@@ -146,7 +167,8 @@ function setEditable(el, plain) {
 /* Eigenschaften eines Eintrags */
 function propsEl(p) {
   const P = p.props, box = h('div', { class: 'props' });
-  const row = (ic, name, view, editor) => box.append(h('div', { class: 'prop' }, h('div', { class: 'pn' }, h('span', { class: 'pi' }, ic), name), h('div', { class: 'pv' }, EDIT ? editor() : view)));
+  const hide = p.hide || [], KEYS = { 'Datum': 'datum', 'Thema': 'thema', 'Werkzeug': 'werkzeug', 'Gefühl': 'gefuehl', 'Art': 'art' };
+  const row = (ic, name, view, editor) => hide.includes(KEYS[name]) ? null : box.append(h('div', { class: 'prop' }, h('div', { class: 'pn' }, h('span', { class: 'pi' }, ic), name), h('div', { class: 'pv' }, EDIT ? editor() : view)));
   const sel = (key, map) => () => { const s = h('select', { onchange: () => { P[key] = s.value; save(); } }, h('option', { value: '' }, '—'), ...Object.keys(map).map(k => h('option', { value: k, selected: P[key] === k ? 'selected' : false }, k))); return s; };
   row('📅', 'Datum', langDatum(P.datum), () => h('input', { type: 'date', value: P.datum || '', onchange: e => { P.datum = e.target.value; save(); } }));
   row('🏷️', 'Thema', chip(P.thema, THEMEN), sel('thema', THEMEN));
@@ -168,8 +190,10 @@ function textEl(tag, b, ph) {
   return el;
 }
 function blockEl(b, list, num) {
-  const w = h('div', { class: 'blk b-' + b.t, 'data-id': b.id });
+  const w = h('div', { class: 'blk b-' + b.t + (b.tc ? ' tc-' + b.tc : '') + (b.bg ? ' bgc-' + b.bg : '') + (EDIT && b.id === SEL ? ' sel' : ''), 'data-id': b.id });
   if (EDIT) {
+    const pick = e => { if (e.target.closest('.blk') === w) select(b.id); };
+    w.addEventListener('mousedown', pick); w.addEventListener('focusin', pick);
     const plus = h('span', { class: 'hplus', title: 'Klicken: Block darunter einfügen' }, '+');
     const grip = h('span', { class: 'hgrip', title: 'Ziehen: verschieben\nKlicken: Menü' }, '⋮⋮');
     w.append(h('div', { class: 'hnd', contenteditable: 'false' }, plus, grip));
@@ -213,14 +237,17 @@ function blockEl(b, list, num) {
       break;
     }
     case 'callout': {
-      const ic = h('span', { class: 'cic' }, b.icon);
-      if (EDIT) ic.onclick = e => { e.stopPropagation(); emojiPop(ic, em => { b.icon = em; save(); ic.textContent = em; }); };
       w.classList.add('col-' + b.color);
-      c.append(ic, textEl('div', b, 'Text')); break;
+      if (b.icon) {
+        const ic = h('span', { class: 'cic' }, b.icon);
+        if (EDIT) ic.onclick = e => { e.stopPropagation(); emojiPop(ic, em => { b.icon = em; save(); render(); }, () => { b.icon = ''; save(); render(); }); };
+        c.append(ic);
+      }
+      c.append(textEl('div', b, 'Text')); break;
     }
     case 'hr': c.append(h('hr')); break;
     case 'code': {
-      const pre = h('pre', { class: 'code' }); pre.textContent = b.text;
+      const pre = h('pre', { class: 'code' + (b.wrap ? ' wrap' : '') }); pre.textContent = b.text;
       if (EDIT) {
         setEditable(pre, true);
         pre.oninput = () => { b.text = pre.innerText.replace(/\n$/, ''); save(); };
@@ -260,7 +287,7 @@ function blockEl(b, list, num) {
       c.append(h('a', { class: 'plink', href: '#' + b.page, onclick: e => { e.preventDefault(); go(b.page); } }, h('span', { class: 'ci' }, pg ? pg.icon : '📄'), h('span', { class: 'pt' }, pg ? pg.title : 'Seite fehlt')));
       break;
     }
-    case 'db': c.append(dbEl()); break;
+    case 'db': c.append(dbEl(b)); break;
   }
   return w;
 }
@@ -272,7 +299,7 @@ function tableEl(b, w, list, num) {
   b.rows.forEach((r, ri) => {
     const tr = h('tr');
     r.forEach((cell, ci) => {
-      const td = h(ri === 0 ? 'th' : 'td'); td.innerHTML = cell;
+      const td = h(ri === 0 && b.head !== false ? 'th' : 'td'); td.innerHTML = cell;
       if (EDIT) { setEditable(td, false); td.oninput = () => { b.rows[ri][ci] = td.innerHTML; save(); }; }
       tr.append(td);
     });
@@ -288,7 +315,7 @@ function tableEl(b, w, list, num) {
 
 /* Bild mit Pfeil-Markierungen */
 function imgEl(b, w, list, num) {
-  const fig = h('figure', { class: 'fig' });
+  const fig = h('figure', { class: 'fig w-' + (b.w || 'L') });
   const redraw = () => w.replaceWith(blockEl(b, list, num));
   const pick = () => { const f = h('input', { type: 'file', accept: 'image/*' }); f.onchange = () => f.files[0] && loadImage(f.files[0], src => { b.src = src; save(); redraw(); }); f.click(); };
   if (!b.src) {
@@ -319,7 +346,7 @@ function imgEl(b, w, list, num) {
   fig.append(wrap);
   const cap = h('figcaption', { class: 'tx', 'data-ph': 'Bildunterschrift' }); cap.innerHTML = b.cap;
   if (EDIT) { setEditable(cap, false); cap.oninput = () => { b.cap = cap.innerHTML; save(); }; }
-  if (b.cap || EDIT) fig.append(cap);
+  if ((b.cap || EDIT) && !b.nocap) fig.append(cap);
   if (EDIT) {
     const bar = h('div', { class: 'imgbar' },
       h('button', { onclick: () => { wrap.classList.add('placing'); bar.querySelector('.hint').textContent = 'Klick auf die Stelle, auf die der Pfeil zeigen soll'; } }, '↗ Pfeil hinzufügen'),
@@ -357,18 +384,32 @@ function loadImage(file, cb) {
 }
 
 /* ---------- Datenbank ---------- */
-let VIEW = 'zeit';
-function dbEl() {
+let VIEW = null;
+const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['thema', '▤', 'Nach Thema']];
+const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
+function newPage() {
+  const id = 'p' + uid(); const d = new Date();
+  DOC.pages[id] = { id, title: '', icon: '📄', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
+  DOC.rows.push(id); save(false); go(id); setTimeout(() => { const t = $('.ptitle'); if (t) t.focus(); }, 30);
+}
+function dbEl(b) {
+  const views = DBVIEWS.filter(v => !(b.hideViews || []).includes(v[0]));
+  if (!views.length) views.push(DBVIEWS[0]);
+  if (!VIEW || !views.some(v => v[0] === VIEW)) VIEW = views.some(v => v[0] === b.view) ? b.view : views[0][0];
+  const cols = b.cols || ['datum', 'thema', 'werkzeug', 'gefuehl'];
   const wrap = h('div', { class: 'db' });
   const tabs = h('div', { class: 'dbtabs' });
-  [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['thema', '▤', 'Nach Thema']].forEach(([k, ic, n]) =>
+  if (views.length > 1) views.forEach(([k, ic, n]) =>
     tabs.append(h('button', { class: 'dbtab' + (VIEW === k ? ' on' : ''), onclick: () => { VIEW = k; render(); } }, h('span', { class: 'ti' }, ic), n)));
-  wrap.append(h('div', { class: 'dbtitle' }, 'Unterrichtstage'), tabs);
+  if (b.title !== '') wrap.append(h('div', { class: 'dbtitle' }, b.title || 'Unterrichtstage'));
+  if (views.length > 1) wrap.append(tabs);
   const rows = DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => (a.props.datum || '9').localeCompare(b.props.datum || '9'));
   const open = p => h('a', { class: 'rowlink', href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, h('span', { class: 'ci' }, p.icon), p.title || 'Unbenannt');
   if (VIEW === 'tab') {
-    const t = h('table', { class: 'dbt' }, h('tr', {}, ...['Name', 'Datum', 'Thema', 'Werkzeug', 'Gefühl'].map(x => h('th', {}, x))));
-    rows.forEach(p => t.append(h('tr', {}, h('td', { class: 'nm' }, open(p)), h('td', {}, kurzDatum(p.props.datum)), h('td', {}, chip(p.props.thema, THEMEN)), h('td', { class: 'mut' }, p.props.werkzeug || ''), h('td', {}, chip(p.props.gefuehl, GEFUEHL)))));
+    const shown = DBCOLS.filter(c => cols.includes(c[0]));
+    const cell = (p, k) => k === 'datum' ? kurzDatum(p.props.datum) : k === 'thema' ? chip(p.props.thema, THEMEN) : k === 'gefuehl' ? chip(p.props.gefuehl, GEFUEHL) : k === 'art' ? chip(p.props.art, ARTEN) : (p.props[k] || '');
+    const t = h('table', { class: 'dbt' }, h('tr', {}, h('th', {}, 'Name'), ...shown.map(x => h('th', {}, x[1]))));
+    rows.forEach(p => t.append(h('tr', {}, h('td', { class: 'nm' }, open(p)), ...shown.map(([k]) => h('td', { class: k === 'werkzeug' ? 'mut' : '' }, cell(p, k))))));
     wrap.append(h('div', { class: 'dbscroll' }, t));
   } else if (VIEW === 'thema') {
     const board = h('div', { class: 'board' });
@@ -387,12 +428,152 @@ function dbEl() {
     });
     wrap.append(tl);
   }
-  if (EDIT) wrap.append(h('div', { class: 'dbnew', onclick: () => {
-    const id = 'p' + uid(); const d = new Date();
-    DOC.pages[id] = { id, title: '', icon: '📄', edited: nowStr(), props: { datum: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, thema: '', werkzeug: '', gefuehl: '', art: 'Unterricht' }, blocks: [nb(['p'])] };
-    DOC.rows.push(id); save(false); go(id); setTimeout(() => $('.ptitle').focus(), 30);
-  } }, '+ Neu'));
+  if (EDIT) wrap.append(h('div', { class: 'dbnew', onclick: newPage }, '+ Neu'));
   return wrap;
+}
+
+/* ================= Kontrollleiste rechts ================= */
+let SEL = null, PTAB = 'block';
+const COLORS = [['', 'Standard'], ['gray', 'Grau'], ['brown', 'Braun'], ['orange', 'Orange'], ['yellow', 'Gelb'], ['green', 'Grün'], ['blue', 'Blau'], ['purple', 'Lila'], ['pink', 'Pink'], ['red', 'Rot']];
+const CONVERTIBLE = ['p', 'h2', 'h3', 'ul', 'ol', 'todo', 'toggle', 'callout', 'quote', 'code', 'arrow'];
+const typeName = t => (TYPES.find(x => x[0] === t) || [, t === 'link' ? 'Seitenlink' : t === 'db' ? 'Datenbank' : t])[1];
+function select(id) {
+  if (SEL === id) return;
+  SEL = id; PTAB = 'block';
+  document.querySelectorAll('.blk.sel').forEach(x => x.classList.remove('sel'));
+  const w = $(`[data-id="${id}"]`); if (w) w.classList.add('sel');
+  renderPanel();
+}
+function pc(...kids) { return h('div', { class: 'pc' }, ...kids); }
+function plabel(t) { return h('div', { class: 'plab' }, t); }
+function prow(label, ...ctrl) { return h('div', { class: 'prow' }, plabel(label), h('div', { class: 'pctl' }, ...ctrl)); }
+function pbtn(label, fn, cls) { return h('button', { class: 'pb ' + (cls || ''), onclick: fn }, label); }
+function pcheck(label, val, fn) { const i = h('input', { type: 'checkbox' }); i.checked = !!val; i.onchange = () => fn(i.checked); return h('label', { class: 'pchk' }, i, label); }
+function pselect(opts, val, fn) { const s = h('select', { class: 'psel', onchange: () => fn(s.value) }, ...opts.map(([v, n]) => h('option', { value: v, selected: v === val ? 'selected' : false }, n))); return s; }
+function pseg(opts, val, fn) { return h('div', { class: 'pseg' }, ...opts.map(([v, n]) => h('button', { class: v === val ? 'on' : '', onclick: () => fn(v) }, n))); }
+function pswatch(list, val, fn, kind) { return h('div', { class: 'psw' }, ...list.map(([v, n]) => h('button', { class: 'sw2 ' + kind + '-' + (v || 'none') + (v === val ? ' on' : ''), title: n, onclick: () => fn(v) }, kind === 't' ? 'A' : ''))); }
+
+function renderPanel() {
+  const P = $('#panel'); if (!P) return;
+  P.hidden = !EDIT; document.body.classList.toggle('haspanel', EDIT);
+  if (!EDIT) return;
+  const st = P.scrollTop; P.innerHTML = '';
+  const tabs = h('div', { class: 'ptabs' });
+  [['block', 'Block'], ['einfuegen', 'Einfügen'], ['seite', 'Seite'], ['seiten', 'Alle Seiten']].forEach(([k, n]) => tabs.append(h('button', { class: PTAB === k ? 'on' : '', onclick: () => { PTAB = k; renderPanel(); } }, n)));
+  P.append(tabs);
+  const body = h('div', { class: 'pbody' });
+  ({ block: panelBlock, einfuegen: panelInsert, seite: panelPage, seiten: panelPages })[PTAB](body);
+  P.append(body); P.scrollTop = st;
+}
+const re = () => { save(); render(); };
+
+function panelBlock(B) {
+  const f = SEL && find(SEL);
+  if (!f) { B.append(h('p', { class: 'pmut' }, 'Klicke auf der Seite einen Block an, dann kannst du ihn hier ändern, verschieben oder löschen.')); return; }
+  const b = f.b;
+  B.append(h('div', { class: 'phead2' }, typeName(b.t)));
+  if (CONVERTIBLE.includes(b.t)) B.append(prow('Blocktyp', pselect(TYPES.filter(x => CONVERTIBLE.includes(x[0])).map(x => [x[0], x[1]]), b.t, v => { convert(b, v); re(); })));
+  if (['p', 'h2', 'h3', 'ul', 'ol', 'todo', 'toggle', 'quote', 'arrow'].includes(b.t)) {
+    B.append(prow('Textfarbe', pswatch(COLORS, b.tc || '', v => { b.tc = v; re(); }, 't')));
+    B.append(prow('Hintergrund', pswatch(COLORS, b.bg || '', v => { b.bg = v; re(); }, 'b')));
+  }
+  if (b.t === 'callout') {
+    B.append(prow('Farbe', pswatch(COLORS.slice(1), b.color, v => { b.color = v; re(); }, 'b')));
+    B.append(prow('Icon', pbtn(b.icon || 'kein Icon', e => emojiPop(e.target, em => { b.icon = em; re(); }, () => { b.icon = ''; re(); })), b.icon ? pbtn('Entfernen', () => { b.icon = ''; re(); }) : null));
+  }
+  if (b.t === 'todo') B.append(pc(pcheck('Erledigt', b.checked, v => { b.checked = v; re(); })));
+  if (b.t === 'toggle') B.append(pc(pcheck('Aufgeklappt', b.open, v => { b.open = v; re(); })));
+  if (b.t === 'code') B.append(pc(pcheck('Lange Zeilen umbrechen', b.wrap, v => { b.wrap = v; re(); })));
+  if (b.t === 'arrow') B.append(pc(pbtn('+ Stichpunkt', () => { b.items.push(''); re(); })));
+  if (b.t === 'table') {
+    const cols = b.rows[0].length;
+    B.append(prow('Zeilen', pbtn('+ Zeile', () => { b.rows.push(new Array(cols).fill('')); re(); }), pbtn('− Zeile', () => { if (b.rows.length > 1) { b.rows.pop(); re(); } })));
+    B.append(prow('Spalten', pbtn('+ Spalte', () => { b.rows.forEach(r => r.push('')); re(); }), pbtn('− Spalte', () => { if (cols > 1) { b.rows.forEach(r => r.pop()); re(); } })));
+    B.append(pc(pcheck('Erste Zeile als Kopfzeile', b.head !== false, v => { b.head = v; re(); })));
+  }
+  if (b.t === 'img') {
+    const pick = () => { const fi = h('input', { type: 'file', accept: 'image/*' }); fi.onchange = () => fi.files[0] && loadImage(fi.files[0], src => { b.src = src; re(); }); fi.click(); };
+    B.append(prow('Bild', pbtn(b.src ? 'Ersetzen' : 'Hochladen', pick)));
+    B.append(prow('Breite', pseg([['S', 'Klein'], ['M', 'Mittel'], ['L', 'Groß']], b.w || 'L', v => { b.w = v; re(); })));
+    B.append(pc(pcheck('Bildunterschrift anzeigen', !b.nocap, v => { b.nocap = !v; re(); })));
+    if (b.src) {
+      B.append(plabel('Pfeile'));
+      b.marks.forEach((m, i) => { const inp = h('input', { class: 'pin', value: m.label, oninput: () => { m.label = inp.value; save(); const l = document.querySelectorAll(`[data-id="${b.id}"] .mt`)[i]; if (l) l.textContent = inp.value; } }); B.append(h('div', { class: 'pmark' }, inp, pbtn('×', () => { b.marks.splice(i, 1); re(); }, 'danger'))); });
+      B.append(pc(pbtn('+ Pfeil (dann aufs Bild klicken)', () => { const bt = $(`[data-id="${b.id}"] .imgbar button`); if (bt) bt.click(); }), b.marks.length ? pbtn('Alle Pfeile löschen', () => { b.marks = []; re(); }, 'danger') : null));
+    }
+  }
+  if (b.t === 'link') B.append(prow('Ziel', pselect(Object.values(DOC.pages).map(p => [p.id, (p.icon ? p.icon + ' ' : '') + (p.title || 'Unbenannt')]), b.page, v => { b.page = v; re(); })));
+  if (b.t === 'db') {
+    const ti = h('input', { class: 'pin', value: b.title === undefined ? 'Unterrichtstage' : b.title, oninput: () => { b.title = ti.value; save(); renderPage(); } });
+    B.append(prow('Titel', ti));
+    B.append(prow('Startansicht', pselect(DBVIEWS.map(v => [v[0], v[2]]), b.view || 'zeit', v => { b.view = v; VIEW = v; re(); })));
+    B.append(plabel('Ansichten anzeigen'));
+    DBVIEWS.forEach(([k, , n]) => B.append(pc(pcheck(n, !(b.hideViews || []).includes(k), v => { b.hideViews = (b.hideViews || []).filter(x => x !== k); if (!v) b.hideViews.push(k); re(); }))));
+    B.append(plabel('Spalten in der Tabelle'));
+    const cols = b.cols || ['datum', 'thema', 'werkzeug', 'gefuehl'];
+    DBCOLS.forEach(([k, n]) => B.append(pc(pcheck(n, cols.includes(k), v => { b.cols = DBCOLS.map(c => c[0]).filter(c => c === k ? v : cols.includes(c)); re(); }))));
+    B.append(pc(pbtn('+ Neuer Termin', newPage)));
+  }
+  B.append(plabel('Anordnen'));
+  const sib = d => f.list[f.i + d];
+  B.append(pc(pbtn('↑ Nach oben', () => { if (sib(-1)) { f.list.splice(f.i, 1); f.list.splice(f.i - 1, 0, b); re(); } }), pbtn('↓ Nach unten', () => { if (sib(1)) { f.list.splice(f.i, 1); f.list.splice(f.i + 1, 0, b); re(); } })));
+  if (f.parent) B.append(pc(pbtn('Aus dem Toggle herausnehmen', () => { f.list.splice(f.i, 1); const pf = find(f.parent.id); pf.list.splice(pf.i + 1, 0, b); re(); })));
+  if (sib(-1) && sib(-1).t === 'toggle' && b.t !== 'db') B.append(pc(pbtn('In den Toggle darüber', () => { const tg = sib(-1); f.list.splice(f.i, 1); tg.children.push(b); tg.open = true; re(); })));
+  B.append(pc(pbtn('⧉ Duplizieren', () => { const copy = JSON.parse(JSON.stringify(b)); const rid = x => { x.id = uid(); (x.children || []).forEach(rid); }; rid(copy); f.list.splice(f.i + 1, 0, copy); SEL = copy.id; re(); }),
+    pbtn('🗑 Löschen', () => { f.list.splice(f.i, 1); SEL = null; re(); }, 'danger')));
+}
+function panelInsert(B) {
+  const f = SEL && find(SEL);
+  B.append(h('p', { class: 'pmut' }, f ? 'Wird unter dem ausgewählten Block eingefügt.' : 'Wird am Ende der Seite eingefügt.'));
+  const grid = h('div', { class: 'pgrid' });
+  [...TYPES, ['link', 'Seitenlink', 'Link auf eine Seite', '↗'], ['db', 'Datenbank', 'Liste der Termine', '▤']].forEach(([t, n, , ic]) => grid.append(h('button', { class: 'pgi', onclick: () => {
+    const nbk = nb([t]); if (t === 'link') nbk.page = DOC.rows[0] || 'home';
+    if (f) f.list.splice(f.i + 1, 0, nbk); else DOC.pages[CUR].blocks.push(nbk);
+    SEL = nbk.id; PTAB = 'block'; re();
+    if (t === 'img') { const fi = h('input', { type: 'file', accept: 'image/*' }); fi.onchange = () => fi.files[0] && loadImage(fi.files[0], src => { nbk.src = src; re(); }); fi.click(); }
+    else focusBlock(nbk.id);
+  } }, h('span', { class: 'pgic' }, ic), n)));
+  B.append(grid);
+}
+function panelPage(B) {
+  const p = DOC.pages[CUR];
+  B.append(h('div', { class: 'phead2' }, p.title || 'Unbenannt'));
+  B.append(prow('Icon', pbtn(p.icon || 'kein Icon', e => emojiPop(e.target, em => { p.icon = em; re(); }, () => { p.icon = ''; re(); })), p.icon ? pbtn('Entfernen', () => { p.icon = ''; re(); }) : null));
+  B.append(plabel('Titelbild'));
+  B.append(pc(pcheck('Titelbild anzeigen', p.cover, v => { p.cover = v; re(); })));
+  if (p.cover) {
+    B.append(prow('Muster', pseg([['dots', 'Punkte'], ['plain', 'Einfarbig'], ['lines', 'Linien'], ['grid', 'Kariert']], p.coverStyle || 'dots', v => { p.coverStyle = v; re(); })));
+    B.append(prow('Farbe', h('div', { class: 'psw' }, ...Object.entries(COVERS).map(([k, [bg]]) => h('button', { class: 'sw2' + ((p.coverColor || 'sand') === k ? ' on' : ''), style: 'background:' + bg, title: k, onclick: () => { p.coverColor = k; re(); } })))));
+    B.append(prow('Eigenes Bild', pbtn('Hochladen', () => { const fi = h('input', { type: 'file', accept: 'image/*' }); fi.onchange = () => fi.files[0] && loadImage(fi.files[0], src => { p.coverImg = src; re(); }); fi.click(); }), p.coverImg ? pbtn('Entfernen', () => { delete p.coverImg; re(); }) : null));
+  }
+  B.append(plabel('Text'));
+  B.append(prow('Schrift', pseg([['sans', 'Standard'], ['serif', 'Serif'], ['mono', 'Mono']], p.font || 'sans', v => { p.font = v; re(); })));
+  B.append(pc(pcheck('Kleine Schrift', p.small, v => { p.small = v; re(); })));
+  B.append(pc(pcheck('Volle Breite', p.full, v => { p.full = v; re(); })));
+  if (p.props) {
+    B.append(plabel('Eigenschaften anzeigen'));
+    DBCOLS.forEach(([k, n]) => B.append(pc(pcheck(n, !(p.hide || []).includes(k), v => { p.hide = (p.hide || []).filter(x => x !== k); if (!v) p.hide.push(k); re(); }))));
+  }
+  if (p.id !== 'home') B.append(h('div', { class: 'psep' }), pc(pbtn('🗑 Seite löschen', () => deletePage(p.id), 'danger')));
+}
+function panelPages(B) {
+  const list = h('div', { class: 'plist' });
+  const pages = [DOC.pages.home, ...DOC.rows.map(id => DOC.pages[id]).filter(Boolean).sort((a, b) => (a.props.datum || '9').localeCompare(b.props.datum || '9')), ...Object.values(DOC.pages).filter(p => p.id !== 'home' && !DOC.rows.includes(p.id))];
+  pages.forEach(p => list.append(h('div', { class: 'pli' + (p.id === CUR ? ' on' : '') },
+    h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, h('span', { class: 'ci' }, p.icon || '📄'), ' ', p.title || 'Unbenannt'),
+    p.id !== 'home' ? h('button', { class: 'pb danger', title: 'Seite löschen', onclick: () => deletePage(p.id) }, '×') : null)));
+  B.append(list, pc(pbtn('+ Neue Seite', newPage)));
+  B.append(h('div', { class: 'psep' }), plabel('Speichern'), h('p', { class: 'pmut' }, 'Änderungen werden in diesem Browser gespeichert. Für die öffentliche Seite als data.json exportieren.'),
+    pc(pbtn('Als data.json exportieren', exportDoc)));
+}
+function deletePage(id) {
+  const p = DOC.pages[id]; if (!p || id === 'home') return;
+  if (!confirm(`Seite „${p.title || 'Unbenannt'}“ löschen?`)) return;
+  delete DOC.pages[id]; DOC.rows = DOC.rows.filter(x => x !== id);
+  const strip = list => { for (let i = list.length - 1; i >= 0; i--) { if (list[i].t === 'link' && list[i].page === id) list.splice(i, 1); else if (list[i].children) strip(list[i].children); } };
+  Object.values(DOC.pages).forEach(pg => strip(pg.blocks));
+  save(false);
+  if (CUR === id) go('home'); else render();
 }
 
 /* ---------- Tastatur, Slash-Menü, Markdown-Kürzel ---------- */
@@ -491,9 +672,10 @@ function blockMenu(anchor, b) {
   }
 }
 const EMOJIS = '📓 📝 🧠 😂 🔢 🔍 🌳 🥤 🚂 🧮 🐞 💭 ✅ 💡 ⚠️ ❓ ℹ️ 📌 🔥 ⭐ 🎯 🤔 😅 👍 ✏️ 📎 🧩 🔧 🛠️ 💻 🖥️ 📊 📈 🗂️ 📚 🎓 ⏱️ 🔑 ❗ ✔️ ❌ 🚀 🤖 ⚙️'.split(' ');
-function emojiPop(anchor, cb) {
+function emojiPop(anchor, cb, onRemove) {
   closePop();
   POP = h('div', { class: 'pop emo' }); document.body.append(POP); place(POP, anchor);
+  if (onRemove) POP.append(h('button', { class: 'emrm', onmousedown: e => { e.preventDefault(); closePop(); onRemove(); } }, 'Icon entfernen'));
   EMOJIS.forEach(em => POP.append(h('button', { class: 'emb', onmousedown: e => { e.preventDefault(); closePop(); cb(em); } }, em)));
 }
 function place(pop, el) {
@@ -539,7 +721,7 @@ async function start() {
   DOC.base = BASE.stamp;
   CUR = location.hash.slice(1) || 'home';
   if (!owner) { $('#editbtn').remove(); $('#more').remove(); EDIT = false; render(); window.addEventListener('hashchange', () => { const id = location.hash.slice(1) || 'home'; if (id !== CUR) { CUR = id; render(); window.scrollTo(0, 0); } }); return; }
-  $('#editbtn').onclick = () => { EDIT = !EDIT; closePop(); render(); };
+  $('#editbtn').onclick = () => { EDIT = !EDIT; SEL = null; PTAB = 'block'; closePop(); render(); };
   $('#more').onclick = e => {
     e.stopPropagation(); closePop();
     POP = h('div', { class: 'pop' }); document.body.append(POP); place(POP, $('#more'));
