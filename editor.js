@@ -417,7 +417,7 @@ function loadImage(file, cb) {
 }
 
 let VIEW = null;
-const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['tab', '▦', 'Tabelle'], ['thema', '▤', 'Nach Thema']];
+const DBVIEWS = [['zeit', '⏱', 'Zeitstrahl'], ['thema', '▤', 'Nach Thema']];
 const DBCOLS = [['datum', 'Datum'], ['thema', 'Thema'], ['werkzeug', 'Werkzeug'], ['gefuehl', 'Gefühl'], ['art', 'Art']];
 function newPage() {
   const id = 'p' + uid(); const d = new Date();
@@ -549,9 +549,6 @@ function panelBlock(B) {
     B.append(prow('Startansicht', pselect(DBVIEWS.map(v => [v[0], v[2]]), b.view || 'zeit', v => { b.view = v; VIEW = v; re(); })));
     B.append(plabel('Ansichten anzeigen'));
     DBVIEWS.forEach(([k, , n]) => B.append(pc(pcheck(n, !(b.hideViews || []).includes(k), v => { b.hideViews = (b.hideViews || []).filter(x => x !== k); if (!v) b.hideViews.push(k); re(); }))));
-    B.append(plabel('Spalten in der Tabelle'));
-    const cols = b.cols || ['datum', 'thema', 'werkzeug', 'gefuehl'];
-    DBCOLS.forEach(([k, n]) => B.append(pc(pcheck(n, cols.includes(k), v => { b.cols = DBCOLS.map(c => c[0]).filter(c => c === k ? v : cols.includes(c)); re(); }))));
     B.append(pc(pbtn('+ Neuer Termin', newPage)));
   }
   if (b.t !== 'db') patCtl(B, b, 'pat', 'patColor', 'Hintergrundmuster');
