@@ -1,12 +1,11 @@
 'use strict';
 /* Inhalt des Forschungstagebuchs. Blöcke: [typ, ...] */
-const CONTENT_VERSION = 4;
+const CONTENT_VERSION = 5;
 
 const START = {
   id: 'home', title: 'Forschungstagebuch Informatik Q3', icon: '📓', cover: true, edited: '15.11.2026 14:22',
   blocks: [
     ['p', 'Leo Widmann · Informatik GK Q3 · 12.08. – 11.11.2026'],
-    ['callout', '💡', 'gray', 'Hier dokumentiere ich alles, was wir in Q3 praktisch gemacht haben. Jeder Termin hat eine eigene Seite. Oben kann man zwischen Zeitstrahl, Tabelle und Themen umschalten.'],
     ['db'],
   ]
 };
