@@ -105,6 +105,27 @@ function convert(b, t) {
   if (t === 'toggle') b.open = true;
 }
 
+/* ---------- freies Verschieben ---------- */
+function applyOff(el, o, px = 'dx', py = 'dy') {
+  const x = o[px] || 0, y = o[py] || 0;
+  el.style.transform = (x || y) ? 'translate(' + x + 'px,' + y + 'px)' : '';
+  el.classList.toggle('offset', !!(x || y));
+}
+function freeHandle(el, o, px = 'dx', py = 'dy') {
+  if (!EDIT) return;
+  const hd = h('span', { class: 'fmove', contenteditable: 'false', title: 'Ziehen: frei verschieben\nDoppelklick: zurücksetzen' }, '✥');
+  hd.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation(); hd.setPointerCapture(e.pointerId);
+    const sx = e.clientX, sy = e.clientY, ox = o[px] || 0, oy = o[py] || 0; el.classList.add('moving');
+    const mm = ev => { o[px] = Math.round((ox + ev.clientX - sx) / 2) * 2; o[py] = Math.round((oy + ev.clientY - sy) / 2) * 2; applyOff(el, o, px, py); };
+    const up = () => { hd.removeEventListener('pointermove', mm); hd.removeEventListener('pointerup', up); el.classList.remove('moving'); save(); renderPanel(); };
+    hd.addEventListener('pointermove', mm); hd.addEventListener('pointerup', up);
+  });
+  hd.addEventListener('click', e => e.stopPropagation());
+  hd.addEventListener('dblclick', e => { e.stopPropagation(); o[px] = 0; o[py] = 0; applyOff(el, o, px, py); save(); renderPanel(); });
+  el.append(hd);
+}
+
 /* ---------- Seiten ---------- */
 function go(id) { closePop(); SEL = null; CUR = DOC.pages[id] ? id : 'home'; location.hash = CUR === 'home' ? '' : '#' + CUR; render(); window.scrollTo(0, 0); }
 function render() {
@@ -132,6 +153,7 @@ function render() {
   }
   const icon = p.icon ? h('div', { class: 'picon', title: EDIT ? 'Icon ändern' : null }, p.icon) : null;
   if (EDIT && icon) icon.onclick = e => { e.stopPropagation(); emojiPop(icon, em => { p.icon = em; save(); render(); }, () => { p.icon = ''; save(); render(); }); };
+  if (icon) { if (p.iconSize) icon.style.fontSize = p.iconSize + 'px'; applyOff(icon, p, 'iconDx', 'iconDy'); freeHandle(icon, p, 'iconDx', 'iconDy'); }
   const title = h('h1', { class: 'ptitle', 'data-ph': 'Unbenannt' }); title.textContent = p.title;
   if (EDIT) {
     setEditable(title, true);
@@ -139,8 +161,9 @@ function render() {
     title.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); const f = p.blocks[0]; if (f && 'html' in f) focusBlock(f.id); } };
   }
   if (icon) head.append(icon);
-  head.append(title);
-  if (p.props) head.append(propsEl(p));
+  const twrap = h('div', { class: 'twrap' }, title); applyOff(twrap, p, 'titleDx', 'titleDy'); freeHandle(twrap, p, 'titleDx', 'titleDy');
+  head.append(twrap);
+  if (p.props) { const pe = propsEl(p); applyOff(pe, p, 'propsDx', 'propsDy'); freeHandle(pe, p, 'propsDx', 'propsDy'); head.append(pe); }
   inner.append(head);
   const body = h('div', { class: 'blocks' }); renderList(p.blocks, body); inner.append(body);
   if (EDIT) inner.append(h('div', { class: 'addend', onclick: () => { const n = nb(['p']); p.blocks.push(n); SEL = n.id; save(); render(); focusBlock(n.id); } }, '+ Klicken, um einen Block hinzuzufügen'));
@@ -152,7 +175,7 @@ function renderPage() { NOPANEL = true; try { render(); } finally { NOPANEL = fa
 const COVERS = { sand: ['#f3ead8', '#e6d6b5'], blau: ['#dfe9f3', '#c3d6ea'], gruen: ['#e3efe3', '#c6dec6'], rosa: ['#f6e3ea', '#ebc8d5'], grau: ['#ecebe8', '#d8d6d0'], lila: ['#e9e3f3', '#d3c7e8'] };
 function coverEl(p) {
   const [bg, fg] = COVERS[p.coverColor || 'sand'] || COVERS.sand;
-  const c = h('div', { class: 'cover cv-' + (p.coverStyle || 'dots') });
+  const c = h('div', { class: 'cover cv-' + (p.coverStyle || 'dots') }); if (p.coverH) c.style.height = p.coverH + 'px';
   c.style.setProperty('--cbg', bg); c.style.setProperty('--cfg', fg);
   if (p.coverImg) { c.style.backgroundImage = `url(${p.coverImg})`; c.classList.add('cv-img'); }
   return c;
@@ -209,6 +232,8 @@ function blockEl(b, list, num) {
     w.ondrop = e => { e.preventDefault(); e.stopPropagation(); if (!DRAG || DRAG === b.id) return; const after = w.classList.contains('drop-after'); moveBlock(DRAG, b.id, after); DRAG = null; save(); render(); };
   }
   const c = h('div', { class: 'bc' }); w.append(c);
+  if (b.wpct) w.style.width = b.wpct + '%';
+  applyOff(w, b); freeHandle(w, b);
   switch (b.t) {
     case 'p': c.append(textEl('div', b, 'Tippe „/“ für Befehle')); break;
     case 'h2': c.append(textEl('h2', b, 'Überschrift 2')); break;
@@ -453,6 +478,15 @@ function pselect(opts, val, fn) { const s = h('select', { class: 'psel', onchang
 function pseg(opts, val, fn) { return h('div', { class: 'pseg' }, ...opts.map(([v, n]) => h('button', { class: v === val ? 'on' : '', onclick: () => fn(v) }, n))); }
 function pswatch(list, val, fn, kind) { return h('div', { class: 'psw' }, ...list.map(([v, n]) => h('button', { class: 'sw2 ' + kind + '-' + (v || 'none') + (v === val ? ' on' : ''), title: n, onclick: () => fn(v) }, kind === 't' ? 'A' : ''))); }
 
+function posCtl(o, px, py, getEl) {
+  const mk = k => { const i = h('input', { type: 'number', class: 'pin num', step: '2', value: o[k] || 0 }); i.oninput = () => { o[k] = +i.value || 0; const el = getEl(); if (el) applyOff(el, o, px, py); save(); }; return i; };
+  return h('div', { class: 'ppos' }, h('span', {}, 'X'), mk(px), h('span', {}, 'Y'), mk(py), pbtn('↺', () => { o[px] = 0; o[py] = 0; const el = getEl(); if (el) applyOff(el, o, px, py); save(); renderPanel(); }));
+}
+function rangeCtl(label, val, min, max, unit, fn) {
+  const out = h('span', { class: 'rval' }, val + unit);
+  const r = h('input', { type: 'range', min, max, step: 1, value: val }); r.oninput = () => { out.textContent = r.value + unit; fn(+r.value); };
+  return h('div', { class: 'prow' }, h('div', { class: 'plab' }, label, ' ', out), r);
+}
 function renderPanel() {
   const P = $('#panel'); if (!P) return;
   P.hidden = !EDIT; document.body.classList.toggle('haspanel', EDIT);
@@ -514,6 +548,10 @@ function panelBlock(B) {
     DBCOLS.forEach(([k, n]) => B.append(pc(pcheck(n, cols.includes(k), v => { b.cols = DBCOLS.map(c => c[0]).filter(c => c === k ? v : cols.includes(c)); re(); }))));
     B.append(pc(pbtn('+ Neuer Termin', newPage)));
   }
+  const blkEl = () => document.querySelector('[data-id="' + b.id + '"]');
+  B.append(plabel('Position und Größe'));
+  B.append(posCtl(b, 'dx', 'dy', blkEl));
+  B.append(rangeCtl('Breite', b.wpct || 100, 20, 100, '%', v => { b.wpct = v === 100 ? 0 : v; const el = blkEl(); if (el) el.style.width = b.wpct ? v + '%' : ''; save(); }));
   B.append(plabel('Anordnen'));
   const sib = d => f.list[f.i + d];
   B.append(pc(pbtn('↑ Nach oben', () => { if (sib(-1)) { f.list.splice(f.i, 1); f.list.splice(f.i - 1, 0, b); re(); } }), pbtn('↓ Nach unten', () => { if (sib(1)) { f.list.splice(f.i, 1); f.list.splice(f.i + 1, 0, b); re(); } })));
@@ -539,9 +577,16 @@ function panelPage(B) {
   const p = DOC.pages[CUR];
   B.append(h('div', { class: 'phead2' }, p.title || 'Unbenannt'));
   B.append(prow('Icon', pbtn(p.icon || 'kein Icon', e => emojiPop(e.target, em => { p.icon = em; re(); }, () => { p.icon = ''; re(); })), p.icon ? pbtn('Entfernen', () => { p.icon = ''; re(); }) : null));
+  if (p.icon) {
+    B.append(rangeCtl('Icon-Größe', p.iconSize || 72, 24, 200, 'px', v => { p.iconSize = v; const el = $('.picon'); if (el) el.style.fontSize = v + 'px'; save(); }));
+    B.append(plabel('Icon-Position')); B.append(posCtl(p, 'iconDx', 'iconDy', () => $('.picon')));
+  }
+  B.append(plabel('Titel-Position')); B.append(posCtl(p, 'titleDx', 'titleDy', () => $('.twrap')));
+  if (p.props) { B.append(plabel('Eigenschaften-Position')); B.append(posCtl(p, 'propsDx', 'propsDy', () => $('.props'))); }
   B.append(plabel('Titelbild'));
   B.append(pc(pcheck('Titelbild anzeigen', p.cover, v => { p.cover = v; re(); })));
   if (p.cover) {
+    B.append(rangeCtl('Höhe', p.coverH || 190, 60, 480, 'px', v => { p.coverH = v; const el = $('.cover'); if (el) el.style.height = v + 'px'; save(); }));
     B.append(prow('Muster', pseg([['dots', 'Punkte'], ['plain', 'Einfarbig'], ['lines', 'Linien'], ['grid', 'Kariert']], p.coverStyle || 'dots', v => { p.coverStyle = v; re(); })));
     B.append(prow('Farbe', h('div', { class: 'psw' }, ...Object.entries(COVERS).map(([k, [bg]]) => h('button', { class: 'sw2' + ((p.coverColor || 'sand') === k ? ' on' : ''), style: 'background:' + bg, title: k, onclick: () => { p.coverColor = k; re(); } })))));
     B.append(prow('Eigenes Bild', pbtn('Hochladen', () => { const fi = h('input', { type: 'file', accept: 'image/*' }); fi.onchange = () => fi.files[0] && loadImage(fi.files[0], src => { p.coverImg = src; re(); }); fi.click(); }), p.coverImg ? pbtn('Entfernen', () => { delete p.coverImg; re(); }) : null));

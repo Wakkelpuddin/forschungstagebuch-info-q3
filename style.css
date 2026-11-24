@@ -262,3 +262,19 @@ body.haspanel .page{padding-right:300px}
   .panel{top:auto;left:0;width:auto;height:44vh;border-left:0;border-top:1px solid var(--line)}
   body.haspanel .page{padding-right:0;padding-bottom:50vh}
 }
+
+/* freies Verschieben */
+.picon,.twrap,.props{position:relative}
+.blk.offset,.picon.offset,.twrap.offset,.props.offset{z-index:2}
+.moving{z-index:5!important;opacity:.85}
+.fmove{display:none}
+body.edit .fmove{display:flex;position:absolute;top:2px;right:-30px;width:22px;height:22px;align-items:center;justify-content:center;font:400 14px/1 var(--font);color:#b5b4b0;border-radius:4px;cursor:move;user-select:none;touch-action:none;opacity:0;transition:opacity .1s;z-index:3}
+body.edit .fmove:hover{background:var(--hover);color:var(--fg)}
+body.edit .blk:hover>.fmove,body.edit .picon:hover>.fmove,body.edit .twrap:hover>.fmove,body.edit .props:hover>.fmove,body.edit .blk.sel>.fmove{opacity:1}
+body.edit .picon>.fmove{top:0;right:-26px}
+.ppos{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ppos span{font-size:12px;color:var(--light)}
+.ppos .pin.num{width:64px}
+.rval{color:var(--fg);font-weight:400}
+.prow input[type=range]{width:100%}
+@media (max-width:820px){body.edit .fmove{right:-4px;top:-18px}}
