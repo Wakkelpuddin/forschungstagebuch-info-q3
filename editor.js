@@ -114,7 +114,7 @@ function render() {
   const home = DOC.pages.home;
   cr.append(h('a', { class: 'crumb', href: '#', onclick: e => { e.preventDefault(); go('home'); } }, h('span', { class: 'ci' }, home.icon), home.title));
   if (p.id !== 'home') cr.append(h('span', { class: 'sep' }, '/'), h('span', { class: 'crumb cur' }, h('span', { class: 'ci' }, p.icon), p.title || 'Unbenannt'));
-  $('#edited').textContent = 'Bearbeitet ' + (p.edited || '');
+  if ($('#edited')) $('#edited').textContent = 'Bearbeitet ' + (p.edited || '');
   if ($('#editbtn')) $('#editbtn').textContent = EDIT ? 'Fertig' : 'Bearbeiten';
   if ($('#more')) $('#more').hidden = !EDIT;
 
