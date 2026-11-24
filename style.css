@@ -300,3 +300,7 @@ svg.graph .gq.sel .gst{stroke:#2383e2;stroke-width:2.6}
 .gedgeh{display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:4px}
 .gbend{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--light);margin-top:4px}
 .gbend input{flex:1}
+
+.pb.pri{background:#2383e2;border-color:#2383e2;color:#fff}
+.pb.pri:hover{background:#1b6fc2}
+.pb:disabled{opacity:.6;cursor:default}

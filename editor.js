@@ -739,8 +739,18 @@ function panelPages(B) {
     h('a', { href: '#' + p.id, onclick: e => { e.preventDefault(); go(p.id); } }, p.icon ? h('span', { class: 'ci' }, p.icon, ' ') : '', p.title || 'Unbenannt'),
     p.id !== 'home' ? h('button', { class: 'pb danger', title: 'Seite löschen', onclick: () => deletePage(p.id) }, '×') : null)));
   B.append(list, pc(pbtn('+ Neue Seite', newPage)));
-  B.append(h('div', { class: 'psep' }), plabel('Speichern'), h('p', { class: 'pmut' }, 'Änderungen werden in diesem Browser gespeichert. Für die öffentliche Seite als data.json exportieren.'),
-    pc(pbtn('Als data.json exportieren', exportDoc)));
+  B.append(h('div', { class: 'psep' }), plabel('Online speichern'));
+  let tok = null; try { tok = localStorage.getItem(TKEY); } catch (er) { }
+  if (tok) {
+    B.append(h('p', { class: 'pmut' }, 'Änderungen sind zuerst nur auf diesem Gerät gespeichert. Mit „Veröffentlichen“ werden sie für alle übernommen (dauert ca. 1 Minute).'));
+    B.append(pc(h('button', { class: 'pb pri', onclick: ev => publish(ev.target) }, 'Veröffentlichen'), pbtn('Token entfernen', () => { localStorage.removeItem(TKEY); renderPanel(); }, 'danger')));
+  } else {
+    const ti = h('input', { type: 'password', class: 'pin', placeholder: 'GitHub-Token', autocomplete: 'off' });
+    B.append(h('p', { class: 'pmut' }, 'Zum Veröffentlichen einmal einen GitHub-Token mit Schreibrecht auf das Repo eintragen. Er bleibt nur auf diesem Gerät.'));
+    B.append(pc(ti), pc(pbtn('Token speichern', () => { if (ti.value.trim()) { localStorage.setItem(TKEY, ti.value.trim()); renderPanel(); } })));
+    B.append(h('p', { class: 'pmut' }, h('a', { href: 'https://github.com/settings/personal-access-tokens/new', target: '_blank', rel: 'noopener' }, 'Token bei GitHub erstellen')));
+  }
+  B.append(pc(pbtn('Als data.json exportieren', exportDoc)));
 }
 function deletePage(id) {
   const p = DOC.pages[id]; if (!p || id === 'home') return;
@@ -867,6 +877,30 @@ function focusEl(el, end = true) {
 }
 function focusBlock(id, end = true) { const w = $(`[data-id="${id}"]`); if (!w) return; focusEl(w.querySelector('.tx, pre.code'), end); }
 
+const REPO = 'Wakkelpuddin/forschungstagebuch-info-q3', TKEY = 'ftbq3-token';
+async function ghApi(path, opt = {}) {
+  const r = await fetch('https://api.github.com/repos/' + REPO + path, Object.assign({}, opt, { headers: { 'Authorization': 'Bearer ' + localStorage.getItem(TKEY), 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json' } }));
+  if (!r.ok) throw new Error(r.status + ' ' + (await r.text()).slice(0, 150));
+  return r.json();
+}
+async function publish(btn) {
+  const old = btn.textContent; btn.disabled = true; btn.textContent = 'Wird gespeichert …';
+  try {
+    const data = JSON.parse(JSON.stringify(DOC)); data.stamp = 'x' + Date.now(); delete data.base;
+    const ref = await ghApi('/git/ref/heads/main'), head = ref.object.sha;
+    const commit = await ghApi('/git/commits/' + head);
+    const blob = await ghApi('/git/blobs', { method: 'POST', body: JSON.stringify({ content: JSON.stringify(data), encoding: 'utf-8' }) });
+    const tree = await ghApi('/git/trees', { method: 'POST', body: JSON.stringify({ base_tree: commit.tree.sha, tree: [{ path: 'data.json', mode: '100644', type: 'blob', sha: blob.sha }] }) });
+    const neu = await ghApi('/git/commits', { method: 'POST', body: JSON.stringify({ message: 'Änderungen', tree: tree.sha, parents: [head] }) });
+    await ghApi('/git/refs/heads/main', { method: 'PATCH', body: JSON.stringify({ sha: neu.sha }) });
+    BASE = JSON.parse(JSON.stringify(data)); DOC.base = data.stamp; DOC.stamp = data.stamp; save(false);
+    btn.textContent = 'Veröffentlicht ✓';
+    setTimeout(() => { btn.textContent = old; btn.disabled = false; }, 4000);
+  } catch (er) {
+    btn.textContent = old; btn.disabled = false;
+    alert('Veröffentlichen hat nicht geklappt: ' + er.message);
+  }
+}
 function exportDoc() {
   const data = JSON.parse(JSON.stringify(DOC)); data.stamp = 'x' + Date.now();
   const a = h('a', { href: URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' })), download: 'data.json' });
@@ -889,12 +923,13 @@ async function checkOwner() {
 async function start() {
   const owner = await checkOwner();
   BASE = buildDoc();
-  try { const r = await fetch('data.json', { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && d.pages && d.stamp) BASE = d; } } catch (e) { }
+  try { const r = await fetch('data.json?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) { const d = await r.json(); if (d && d.pages && d.stamp) BASE = d; } } catch (e) { }
   DOC = BASE;
   if (owner) {
     try {
       const s = JSON.parse(localStorage.getItem(KEY));
-      if (s && s.base === BASE.stamp && s.pages) DOC = s;
+      const newer = s && s.base && s.base[0] === 'x' && (BASE.stamp[0] !== 'x' || +s.base.slice(1) > +BASE.stamp.slice(1));
+      if (s && s.pages && (s.base === BASE.stamp || newer)) DOC = s;
       else if (s && s.pages) localStorage.setItem(KEY + '-alt', JSON.stringify(s));
     } catch (e) { }
   }
@@ -907,6 +942,7 @@ async function start() {
     POP = h('div', { class: 'pop' }); document.body.append(POP); place(POP, $('#more'));
     POP.style.left = Math.max(8, $('#more').getBoundingClientRect().right - 230) + 'px';
     const it = (n, fn, cls) => POP.append(h('div', { class: 'popi small ' + (cls || ''), onmousedown: ev => { ev.preventDefault(); closePop(); fn(); } }, h('span', { class: 'popn' }, n)));
+    if (localStorage.getItem(TKEY)) it('Veröffentlichen', () => publish($('#editbtn')));
     it('Als data.json exportieren', exportDoc);
     if (localStorage.getItem(KEY + '-alt')) it('Ältere Änderungen exportieren', () => { const a = h('a', { href: URL.createObjectURL(new Blob([localStorage.getItem(KEY + '-alt')], { type: 'application/json' })), download: 'data-alt.json' }); document.body.append(a); a.click(); a.remove(); });
     it('Bearbeiten auf diesem Gerät sperren', () => { try { localStorage.removeItem(OWNER_FLAG); } catch (er) { } location.reload(); });
